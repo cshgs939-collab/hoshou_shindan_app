@@ -6,8 +6,8 @@
 |------|------|
 | Flutter 3.44.2 | ✅ |
 | Android SDK 36 | ✅ セットアップ済み |
-| Android エミュレータ | ✅ Pixel_7_API_35 で起動・動作確認済み |
-| アプリ (com.hoshou.shindan) | ✅ エミュレータ上で診断結果画面まで確認 |
+| Android エミュレータ | ✅ Pixel_7_API_35 — デバッグ/リリース APK 起動確認済み |
+| アプリ (com.hoshou.shindan) | ✅ ホーム画面・診断フロー動作 |
 | iOS / Xcode | ❌ 未インストール（App Store から Xcode が必要） |
 | 物理 Android 端末 | 未接続（USB 接続で確認可能） |
 
@@ -113,6 +113,9 @@ flutter run -d <iPhone の device ID>
 
 | 症状 | 対処 |
 |------|------|
+| 起動直後に `WorkDatabase` / `WorkManagerInitializer` でクラッシュ | `AndroidManifest.xml` で `WorkManagerInitializer` を無効化済み（home_widget 経由の WorkManager 自動初期化が原因） |
+| リリース APK でスプラッシュのまま止まる | `android/app/proguard-rules.pro` に Gson ルールを追加（flutter_local_notifications 用） |
+| ウィジェット更新で `ClassNotFoundException` | `WidgetService` で `qualifiedAndroidName: com.example.hoshou_shindan_app.MamoruHomeWidgetProvider` を指定 |
 | `Unable to locate Android SDK` | `flutter config --android-sdk ~/Library/Android/sdk` |
 | `Unable to locate Java` | `export JAVA_HOME=$HOME/.local/jdk-17/Contents/Home` |
 | エミュレータが起動しない | `emulator -list-avds` で AVD 名を確認 |

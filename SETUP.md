@@ -25,7 +25,9 @@ flutter devices
 
 ### iOS / macOS（Xcode が必要）
 
-1. App Store から **Xcode** をインストール
+詳細手順: **`docs/IOS_SETUP.md`**
+
+1. App Store から **Xcode** をインストール（現在: 未インストール — Command Line Tools のみ）
 2. 初回セットアップ:
 
 ```bash
@@ -127,12 +129,24 @@ flutter clean && flutter pub get  # キャッシュクリア
 
 ---
 
-## Step 5: 実機確認（次の作業）
+## Step 5: 実機確認
 
-### Android 実機
+### Android エミュレータ（確認済み 2026-06-25）
+
+- デバッグ / リリース APK ともに起動成功
+- スクリーンショット: `docs/android_mamoru_home_screen.png`
+
+### Android 実機（次）
 
 1. スマホで **USB デバッグ** を ON
 2. USB 接続後:
+
+```bash
+chmod +x scripts/wait_android_device.sh
+./scripts/wait_android_device.sh   # 実機を待って APK インストール・起動
+```
+
+または:
 
 ```bash
 adb devices
