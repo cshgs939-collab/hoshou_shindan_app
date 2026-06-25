@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Generate app icons for 必要保障額診断."""
+"""Generate app icons for まもる計算."""
 from __future__ import annotations
 
 import json

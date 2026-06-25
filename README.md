@@ -1,17 +1,33 @@
-# hoshou_shindan_app
+# まもる計算
 
-A new Flutter project.
+家族を守る保障額シミュレーター（Flutter 3.x / iOS・Android・Web）
 
-## Getting Started
+家族構成・収入・支出・既存保障から必要保障額を試算し、不足額を可視化します。保険販売・勧誘ではなく、参考用の簡易診断ツールです。
 
-This project is a starting point for a Flutter application.
+## 起動
 
-A few resources to get you started if this is your first Flutter project:
+```bash
+cd /Users/maya2018/Downloads/hoshou_shindan_app
+/Users/maya2018/flutter/bin/flutter pub get
+/Users/maya2018/flutter/bin/dart run build_runner build --delete-conflicting-outputs
+/Users/maya2018/flutter/bin/flutter run
+```
 
-- [Learn Flutter](https://docs.flutter.dev/get-started/learn-flutter)
-- [Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Flutter learning resources](https://docs.flutter.dev/reference/learning-resources)
+## ドキュメント
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+| 内容 | 場所 |
+|---|---|
+| プロジェクト索引 | [docs/hoshou_shindan_app/INDEX.md](../docs/hoshou_shindan_app/INDEX.md) |
+| 名称・系譜 | [docs/hoshou_shindan_app/legacy.md](../docs/hoshou_shindan_app/legacy.md) |
+| セットアップ | [SETUP.md](./SETUP.md) |
+| 実機確認 | [docs/DEVICE_TESTING.md](./docs/DEVICE_TESTING.md) |
+
+## よく使うコマンド
+
+```bash
+flutter analyze
+flutter test
+flutter build web --release
+./scripts/run_android.sh run
+./scripts/serve_web.sh
+```

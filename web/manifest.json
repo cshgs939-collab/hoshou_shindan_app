@@ -1,11 +1,11 @@
 {
-    "name": "必要保障額診断",
-    "short_name": "保障診断",
+    "name": "まもる計算",
+    "short_name": "まもる計算",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#1A3A5C",
     "theme_color": "#1A3A5C",
-    "description": "年齢・年収・家族構成から不足保障額を簡易試算する診断ツール（保険勧誘ではありません）",
+    "description": "家族構成・収入・支出から必要保障額を試算し、不足額を可視化（保険勧誘ではありません）",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [

@@ -1,63 +1,102 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:hoshou_shindan_app/core/constants/education_costs.dart';
+import 'package:hoshou_shindan_app/core/enums/housing_type.dart';
+import 'package:hoshou_shindan_app/core/enums/pension_mode.dart';
+import 'package:hoshou_shindan_app/core/enums/school_type.dart';
+import 'package:hoshou_shindan_app/data/models/diagnosis_input.dart';
+import 'package:hoshou_shindan_app/domain/calculation/calculation_engine.dart';
 
-import 'package:hoshou_shindan_app/main.dart';
+DiagnosisInput _sampleInput({
+  bool hasSpouse = true,
+  List<int> childrenAges = const [3],
+  int annualIncome = 600,
+  int monthlyExpense = 25,
+  HousingType housingType = HousingType.mortgaged,
+  int? mortgageBalance = 3000,
+  int? monthlyRent,
+}) {
+  return DiagnosisInput(
+    id: 'test',
+    createdAt: DateTime(2026, 6, 25),
+    age: 35,
+    hasSpouse: hasSpouse,
+    spouseAge: 33,
+    childrenAges: childrenAges,
+    schoolType: EducationPolicy.publicAll.index,
+    annualIncome: annualIncome,
+    spouseIncome: 200,
+    monthlyExpense: monthlyExpense,
+    housingType: housingType.index,
+    mortgageBalance: mortgageBalance,
+    monthlyRent: monthlyRent,
+    lifeInsurance: 500,
+    termInsurance: 500,
+    financialAssets: 300,
+    pensionMode: SurvivorPensionMode.auto.index,
+    workingYears: 20,
+  );
+}
 
 void main() {
-  group('calculate', () {
-    test('独身は保障年数0で不足保障額0', () {
-      final input = DiagnosisInput()
-        ..maritalStatus = MaritalStatus.single
-        ..annualIncomeMan = 500;
-
-      final result = calculate(input);
-
-      expect(result.coverageYears, 0);
-      expect(result.livingExpenseMan, 0);
-      expect(result.shortfallMan, 0);
+  group('教育費計算テスト', () {
+    test('3歳の子ども・公立コース', () {
+      final fee = calcEducationFee(3, EducationPolicy.publicAll);
+      expect(fee, greaterThan(500));
     });
 
-    test('既婚・子なし・会社員の試算', () {
-      final input = DiagnosisInput()
-        ..maritalStatus = MaritalStatus.married
-        ..childrenCount = 0
-        ..annualIncomeMan = 500
-        ..employment = EmploymentType.employee;
-
-      final result = calculate(input);
-
-      expect(result.coverageYears, 10);
-      expect(result.livingExpenseMan, 2000); // 500 * 0.4 * 10
-      expect(result.welfarePensionMan, 1500); // 500 * 0.3 * 10
-      expect(result.educationCostMan, 0);
-      expect(result.shortfallMan, 500);
+    test('0歳の子ども・私立コース', () {
+      final fee = calcEducationFee(0, EducationPolicy.privateAll);
+      expect(fee, greaterThan(2000));
     });
 
-    test('不足保障額は常に0以上', () {
-      final inputs = [
-        DiagnosisInput()..maritalStatus = MaritalStatus.single,
-        DiagnosisInput()
-          ..maritalStatus = MaritalStatus.married
-          ..childrenCount = 2
-          ..youngestChildAge = 3
-          ..educationType = EducationType.privateSchool,
-      ];
+    test('22歳（卒業済み）', () {
+      final fee = calcEducationFee(22, EducationPolicy.publicAll);
+      expect(fee, equals(0));
+    });
+  });
 
-      for (final input in inputs) {
-        expect(calculate(input).shortfallMan, greaterThanOrEqualTo(0));
-      }
+  group('CalculationEngine', () {
+    final engine = CalculationEngine();
+
+    test('必要保障額は費目合計になる', () {
+      final result = engine.calculate(_sampleInput());
+      expect(
+        result.requiredAmount,
+        result.livingExpense +
+            result.educationFee +
+            result.housingFee +
+            result.funeralFee,
+      );
     });
 
-    test('buildCompareScenarios は雇用形態の比較を含む', () {
-      final input = DiagnosisInput()
-        ..maritalStatus = MaritalStatus.married
-        ..childrenCount = 1
-        ..youngestChildAge = 5
-        ..educationType = EducationType.publicSchool;
+    test('持家完済は住居費0', () {
+      final result = engine.calculate(
+        _sampleInput(
+          housingType: HousingType.owned,
+          mortgageBalance: 3000,
+        ),
+      );
+      expect(result.housingFee, 0);
+    });
 
-      final scenarios = buildCompareScenarios(input);
+    test('持家ローンは残債を住居費に反映', () {
+      final result = engine.calculate(
+        _sampleInput(
+          housingType: HousingType.mortgaged,
+          mortgageBalance: 3000,
+        ),
+      );
+      expect(result.housingFee, 3000);
+    });
 
-      expect(scenarios.length, greaterThanOrEqualTo(3));
-      expect(scenarios.first.isBaseline, isTrue);
+    test('不足額は必要 - 既存 - 遺族年金', () {
+      final result = engine.calculate(_sampleInput());
+      expect(
+        result.gap,
+        result.requiredAmount -
+            result.existingCoverage -
+            result.survivorPension,
+      );
     });
   });
 }

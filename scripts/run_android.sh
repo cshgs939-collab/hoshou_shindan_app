@@ -1,5 +1,5 @@
 #!/bin/bash
-# 必要保障額診断 — Android 実機/エミュレータ起動スクリプト
+# まもる計算 — Android 実機/エミュレータ起動スクリプト
 set -euo pipefail
 
 export JAVA_HOME="${JAVA_HOME:-$HOME/.local/jdk-17/Contents/Home}"

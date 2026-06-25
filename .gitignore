@@ -43,3 +43,10 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+
+# Release binaries (README only in git)
+/releases/*.apk
+/releases/*.zip
+
+# Cursor local config
+.cursor/
