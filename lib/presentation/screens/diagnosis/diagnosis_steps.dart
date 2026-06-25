@@ -11,6 +11,7 @@ import '../../providers/diagnosis_input_provider.dart';
 import '../../widgets/number_input_field.dart';
 import '../../widgets/primary_button.dart';
 import '../../widgets/step_progress_bar.dart';
+import '../guide/sample_guide_screen.dart';
 
 class Step1Screen extends ConsumerWidget {
   const Step1Screen({super.key});
@@ -26,6 +27,7 @@ class Step1Screen extends ConsumerWidget {
         padding: const EdgeInsets.all(20),
         children: [
           const StepProgressBar(currentStep: 0, totalSteps: 3),
+          const SampleModeBanner(),
           const SizedBox(height: 24),
           AgeSliderField(
             label: 'あなたの年齢',
@@ -226,6 +228,7 @@ class Step2Screen extends ConsumerWidget {
         padding: const EdgeInsets.all(20),
         children: [
           const StepProgressBar(currentStep: 1, totalSteps: 3),
+          const SampleModeBanner(),
           const SizedBox(height: 24),
           NumberInputField(
             label: 'あなたの年収（税込）',
@@ -312,6 +315,7 @@ class Step3Screen extends ConsumerWidget {
         padding: const EdgeInsets.all(20),
         children: [
           const StepProgressBar(currentStep: 2, totalSteps: 3),
+          const SampleModeBanner(),
           const SizedBox(height: 24),
           NumberInputField(
             label: '現在の死亡保障額（生命保険）',

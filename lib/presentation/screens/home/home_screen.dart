@@ -7,6 +7,8 @@ import '../../../core/utils/formatter.dart';
 import '../../providers/diagnosis_input_provider.dart';
 import '../../providers/history_provider.dart';
 import '../../widgets/primary_button.dart';
+import '../../widgets/sample_case_guide.dart';
+import '../guide/sample_guide_screen.dart';
 
 class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
@@ -20,6 +22,10 @@ class HomeScreen extends ConsumerWidget {
       appBar: AppBar(
         title: const Text('まもる計算'),
         actions: [
+          TextButton(
+            onPressed: () => context.push('/sample-guide'),
+            child: const Text('例題'),
+          ),
           IconButton(
             icon: const Icon(Icons.settings_outlined),
             onPressed: () => context.push('/settings'),
@@ -29,6 +35,18 @@ class HomeScreen extends ConsumerWidget {
       body: ListView(
         padding: const EdgeInsets.all(20),
         children: [
+          const SampleCaseGuidePanel(),
+          const SizedBox(height: 12),
+          FilledButton.tonal(
+            onPressed: () {
+              ref.read(diagnosisInputProvider.notifier).loadSampleCase();
+              ref.read(currentStepProvider.notifier).state = 0;
+              ref.read(isSampleCaseModeProvider.notifier).state = true;
+              context.push('/diagnosis/step1');
+            },
+            child: const Text('例題で診断する（そのまま次へ）'),
+          ),
+          const SizedBox(height: 24),
           if (latest != null) ...[
             Card(
               child: Padding(
@@ -81,16 +99,17 @@ class HomeScreen extends ConsumerWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('🆕 新しく診断する',
+                  Text('🆕 自分の数字で診断する',
                       style: Theme.of(context).textTheme.titleLarge),
                   const SizedBox(height: 8),
-                  const Text('家族の状況が変わったら再診断しましょう'),
+                  const Text('家族の状況に合わせて入力してください'),
                   const SizedBox(height: 16),
                   PrimaryButton(
                     label: '診断スタート →',
                     onPressed: () {
                       ref.read(diagnosisInputProvider.notifier).reset();
                       ref.read(currentStepProvider.notifier).state = 0;
+                      ref.read(isSampleCaseModeProvider.notifier).state = false;
                       context.push('/diagnosis/step1');
                     },
                   ),
@@ -116,7 +135,7 @@ class HomeScreen extends ConsumerWidget {
             const Card(
               child: Padding(
                 padding: EdgeInsets.all(20),
-                child: Text('まだ診断履歴がありません。診断を始めてみましょう。'),
+                child: Text('まだ診断履歴がありません。上の例題から試してみましょう。'),
               ),
             )
           else

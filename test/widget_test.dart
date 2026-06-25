@@ -44,6 +44,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('まもる計算'), findsOneWidget);
-    expect(find.text('診断スタート →'), findsOneWidget);
+    expect(find.textContaining('田中さん一家'), findsOneWidget);
+    expect(find.text('例題で診断する（そのまま次へ）'), findsOneWidget);
   });
 }

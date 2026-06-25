@@ -199,6 +199,11 @@ class DiagnosisInputNotifier extends StateNotifier<DiagnosisInput> {
     state = DiagnosisInput.empty();
     _persistDraft();
   }
+
+  /// 例題（田中さん一家）— 初期値そのまま。入力せず「次へ」で進める。
+  void loadSampleCase() {
+    reset();
+  }
 }
 
 final diagnosisInputProvider =

@@ -8,6 +8,7 @@ import 'data/models/app_settings.dart';
 import 'presentation/providers/history_provider.dart';
 import 'presentation/screens/diagnosis/calculating_screen.dart';
 import 'presentation/screens/diagnosis/diagnosis_steps.dart';
+import 'presentation/screens/guide/sample_guide_screen.dart';
 import 'presentation/screens/history/compare_screen.dart';
 import 'presentation/screens/home/home_screen.dart';
 import 'presentation/screens/onboarding/onboarding_screen.dart';
@@ -100,6 +101,10 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/home',
         builder: (context, state) => const HomeScreen(),
+      ),
+      GoRoute(
+        path: '/sample-guide',
+        builder: (context, state) => const SampleGuideScreen(),
       ),
       GoRoute(
         path: '/diagnosis/step1',
