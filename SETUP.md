@@ -123,7 +123,7 @@ flutter clean && flutter pub get  # キャッシュクリア
 
 - [x] プライバシーポリシー → `docs/PRIVACY_POLICY.md`
 - [x] ストア文案 → `docs/STORE_LISTING.md`
-- [ ] スクリーンショット → `./scripts/capture_store_screenshots.sh` → `docs/store/`
+- [x] スクリーンショット → `docs/store/`（6枚取得済み）
 - [ ] ストア説明文に「簡易試算」「勧誘なし」を明記（文案済み）
 - [ ] iOS: Apple Developer Program / 署名 → `docs/IOS_SETUP.md`
 - [ ] Android: リリース用 keystore → `docs/ANDROID_RELEASE.md`
