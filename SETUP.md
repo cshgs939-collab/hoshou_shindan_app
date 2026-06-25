@@ -1,16 +1,24 @@
 # まもる計算 — セットアップガイド
 
-## Step 1: Chrome で動作確認（完了可能）
+## Step 1: Web 版（iPhone Safari 対応・推奨）
+
+Android 端末がなくても、**iPhone の Safari** から利用できます。
 
 ```bash
 cd /Users/maya2018/Downloads/hoshou_shindan_app
-export PATH="$HOME/flutter/bin:$PATH"
-flutter pub get
-dart run build_runner build --delete-conflicting-outputs
-flutter run -d chrome
+./scripts/serve_web.sh
 ```
 
-ブラウザで `http://localhost:<port>` が開きます。
+- Mac: `http://localhost:8081`
+- iPhone（同一 Wi‑Fi）: 表示される `http://192.168.x.x:8081` を Safari で開く
+
+詳細: **`docs/WEB_IPHONE.md`**
+
+### Chrome で開発確認
+
+```bash
+flutter run -d chrome
+```
 
 ---
 

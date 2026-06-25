@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -13,6 +14,7 @@ import 'presentation/screens/onboarding/onboarding_screen.dart';
 import 'presentation/screens/result/result_dashboard_screen.dart';
 import 'presentation/screens/scenario/scenario_screen.dart';
 import 'presentation/screens/splash/splash_screen.dart';
+import 'presentation/widgets/web_shell.dart';
 
 class MamoruApp extends ConsumerWidget {
   const MamoruApp({super.key});
@@ -29,6 +31,10 @@ class MamoruApp extends ConsumerWidget {
       darkTheme: _buildTheme(Brightness.dark, settings),
       themeMode: settings.isDarkMode ? ThemeMode.dark : ThemeMode.light,
       routerConfig: router,
+      builder: (context, child) {
+        if (child == null) return const SizedBox.shrink();
+        return WebShell(child: child);
+      },
     );
   }
 

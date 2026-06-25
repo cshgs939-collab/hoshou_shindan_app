@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -266,30 +267,40 @@ class SettingsScreen extends ConsumerWidget {
             ),
           ),
           const Divider(),
-          const ListTile(title: Text('通知設定')),
-          SwitchListTile(
-            title: const Text('年次リマインダー'),
-            value: settings.notificationEnabled,
-            onChanged: notifier.setNotificationEnabled,
-          ),
-          ListTile(
-            title: const Text('通知タイミング'),
-            subtitle: Text('毎年${settings.notificationMonth}月'),
-            trailing: DropdownButton<int>(
-              value: settings.notificationMonth,
-              items: List.generate(
-                12,
-                (index) => DropdownMenuItem(
-                  value: index + 1,
-                  child: Text('${index + 1}月'),
-                ),
-              ),
-              onChanged: (value) {
-                if (value != null) notifier.setNotificationMonth(value);
-              },
+          if (!kIsWeb) ...[
+            const ListTile(title: Text('通知設定')),
+            SwitchListTile(
+              title: const Text('年次リマインダー'),
+              value: settings.notificationEnabled,
+              onChanged: notifier.setNotificationEnabled,
             ),
-          ),
-          const Divider(),
+            ListTile(
+              title: const Text('通知タイミング'),
+              subtitle: Text('毎年${settings.notificationMonth}月'),
+              trailing: DropdownButton<int>(
+                value: settings.notificationMonth,
+                items: List.generate(
+                  12,
+                  (index) => DropdownMenuItem(
+                    value: index + 1,
+                    child: Text('${index + 1}月'),
+                  ),
+                ),
+                onChanged: (value) {
+                  if (value != null) notifier.setNotificationMonth(value);
+                },
+              ),
+            ),
+            const Divider(),
+          ] else
+            const ListTile(
+              title: Text('Web版について'),
+              subtitle: Text(
+                'ブラウザ版では通知・ホーム画面ウィジェットは利用できません。'
+                'データは端末内（ブラウザ）に保存されます。',
+              ),
+            ),
+          if (!kIsWeb) const Divider(),
           const ListTile(title: Text('データ管理')),
           ListTile(
             title: const Text('データをエクスポート（JSON）'),
@@ -322,8 +333,10 @@ class SettingsScreen extends ConsumerWidget {
           ),
           ListTile(
             title: const Text('ホーム画面ウィジェット'),
-            subtitle: const Text(
-              'iOS / Android のホーム画面に不足額を表示（診断後に自動更新）',
+            subtitle: Text(
+              kIsWeb
+                  ? 'Web版では利用できません（iOS/Android アプリ専用）'
+                  : 'iOS / Android のホーム画面に不足額を表示（診断後に自動更新）',
             ),
           ),
           ListTile(
