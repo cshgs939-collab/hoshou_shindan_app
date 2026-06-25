@@ -372,7 +372,11 @@ class SettingsScreen extends ConsumerWidget {
             onTap: () => _showTextDialog(
               context,
               'プライバシーポリシー',
-              '入力データは端末内にのみ保存され、外部サーバーへ送信されません。',
+              '入力データは端末内にのみ保存され、外部サーバーへ送信されません。'
+              '広告配信や第三者へのデータ販売は行いません。'
+              '診断履歴は AES 暗号化で端末内に保存されます。'
+              'アプリをアンインストールするとデータは削除されます。'
+              '詳細: docs/PRIVACY_POLICY.md（GitHub 公開）',
             ),
           ),
         ],

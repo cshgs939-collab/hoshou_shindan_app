@@ -49,6 +49,10 @@ class DiagnosisInput extends HiveObject {
       hasSpouse: true,
       spouseAge: 33,
       childrenAges: const [3],
+      annualIncome: 500,
+      spouseIncome: 200,
+      monthlyExpense: 30,
+      monthlyRent: 10,
     );
   }
 

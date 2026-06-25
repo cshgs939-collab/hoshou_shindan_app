@@ -1,0 +1,4 @@
+storePassword=CHANGE_ME
+keyPassword=CHANGE_ME
+keyAlias=mamoru
+storeFile=/Users/maya2018/.android/keystores/mamoru-release.jks

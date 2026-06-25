@@ -121,11 +121,12 @@ flutter clean && flutter pub get  # キャッシュクリア
 
 ## ストア公開前チェックリスト
 
-- [ ] プライバシーポリシー（端末内完結・外部送信なし）
-- [ ] スクリーンショット（ホーム / 入力 / 結果 / 比較）
-- [ ] ストア説明文に「簡易試算」「勧誘なし」を明記
-- [ ] iOS: Apple Developer Program / 署名
-- [ ] Android: リリース用 keystore 作成
+- [x] プライバシーポリシー → `docs/PRIVACY_POLICY.md`
+- [x] ストア文案 → `docs/STORE_LISTING.md`
+- [ ] スクリーンショット → `./scripts/capture_store_screenshots.sh` → `docs/store/`
+- [ ] ストア説明文に「簡易試算」「勧誘なし」を明記（文案済み）
+- [ ] iOS: Apple Developer Program / 署名 → `docs/IOS_SETUP.md`
+- [ ] Android: リリース用 keystore → `docs/ANDROID_RELEASE.md`
 
 ---
 
