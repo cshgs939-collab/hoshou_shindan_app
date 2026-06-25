@@ -3,7 +3,10 @@ import 'package:flutter/material.dart';
 
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/utils/formatter.dart';
+import '../../../../data/models/diagnosis_input.dart';
 import '../../../../data/models/diagnosis_result.dart';
+import '../../../../domain/calculation/calculation_engine.dart';
+import '../../../../domain/calculation/retirement_guarantee_summary.dart';
 import '../../../widgets/animated_widgets.dart';
 
 class CoverageBarChart extends StatelessWidget {
@@ -87,12 +90,28 @@ class CoverageBarChart extends StatelessWidget {
 }
 
 class BreakdownCard extends StatelessWidget {
-  const BreakdownCard({super.key, required this.result});
+  const BreakdownCard({
+    super.key,
+    required this.result,
+    this.input,
+  });
 
   final DiagnosisResult result;
+  final DiagnosisInput? input;
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final pre65Living = input != null
+        ? calcPreRetirementLivingExpense(input!)
+        : null;
+    final post65Living = input != null
+        ? calcRetirementLivingExpense(input!)
+        : null;
+    final retirementSummary = input != null && input!.hasSpouse
+        ? RetirementGuaranteeSummary.from(input: input!, result: result)
+        : null;
+
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(20),
@@ -100,22 +119,73 @@ class BreakdownCard extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text('費目別の詳細',
-                style: Theme.of(context).textTheme.titleMedium),
-            const SizedBox(height: 16),
-            _row('👨‍👩‍👧 遺族生活費', result.livingExpense),
+                style: theme.textTheme.titleMedium),
+            const SizedBox(height: 8),
+            Text(
+              '保障が必要な額（費目別）',
+              style: theme.textTheme.titleSmall?.copyWith(
+                color: AppColors.primary,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            const SizedBox(height: 12),
+            _row('👨‍👩‍👧 生活費不足分', result.livingExpense, bold: true),
+            if (pre65Living != null && post65Living != null) ...[
+              _subRow('65歳まで', pre65Living),
+              _subRow('65歳以降（公的年金控除後）', post65Living),
+              if (retirementSummary != null &&
+                  retirementSummary.livingShortfallTotalMan > 0)
+                Padding(
+                  padding: const EdgeInsets.only(left: 16, top: 2, bottom: 6),
+                  child: Text(
+                    '65歳以降：${formatYen(retirementSummary.monthlyShortfallYen)}/月'
+                    ' × 12 × ${retirementSummary.retirementYears}年'
+                    ' ＝ ${formatManYen(retirementSummary.livingShortfallTotalMan)}',
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: AppColors.outline,
+                    ),
+                  ),
+                ),
+            ],
             _row('🎓 教育費', result.educationFee),
             _row('🏠 住居費', result.housingFee),
             _row('⚰️ 葬儀等', result.funeralFee),
             const Divider(height: 28),
-            _row('合計', result.requiredAmount, bold: true),
+            _row('合計（必要額）', result.requiredAmount, bold: true),
+            const SizedBox(height: 12),
+            Text(
+              '足りる分',
+              style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                    color: AppColors.secondary,
+                  ),
+            ),
             const SizedBox(height: 8),
-            _row('💰 遺族年金', -result.survivorPension),
-            _row('💳 既存保障', -result.existingCoverage),
+            _row(
+              '💳 既存保障',
+              result.existingCoverage,
+              kind: _BreakdownKind.credit,
+            ),
+            const SizedBox(height: 8),
+            Text(
+              '※ 公的年金・配偶者就労は生活費に反映済み。'
+              '詳細は下の「計算の考え方」をご覧ください。',
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: AppColors.outline,
+                  ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              '不足額 ＝ 合計 − 既存保障',
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: AppColors.outline,
+                  ),
+            ),
             const Divider(height: 28),
             _row(
               '不足額',
               result.gap,
               bold: true,
+              kind: _BreakdownKind.result,
               color: result.gap > 0 ? AppColors.error : AppColors.secondary,
             ),
           ],
@@ -124,8 +194,22 @@ class BreakdownCard extends StatelessWidget {
     );
   }
 
-  Widget _row(String label, int amount,
-      {bool bold = false, Color? color}) {
+  Widget _row(
+    String label,
+    int amount, {
+    bool bold = false,
+    Color? color,
+    _BreakdownKind kind = _BreakdownKind.expense,
+  }) {
+    final displayColor = color ??
+        (kind == _BreakdownKind.credit ? AppColors.secondary : null);
+    final formatted = switch (kind) {
+      _BreakdownKind.credit =>
+        amount == 0 ? formatManYen(0) : '+${formatManYen(amount)}',
+      _BreakdownKind.result => formatManYen(amount),
+      _BreakdownKind.expense => formatManYen(amount),
+    };
+
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 4),
       child: Row(
@@ -136,19 +220,38 @@ class BreakdownCard extends StatelessWidget {
                 fontWeight: bold ? FontWeight.bold : FontWeight.normal,
               )),
           Text(
-            amount < 0
-                ? '-${formatManYen(amount.abs())}'
-                : formatManYen(amount),
+            formatted,
             style: TextStyle(
               fontWeight: bold ? FontWeight.bold : FontWeight.normal,
-              color: color,
+              color: displayColor,
             ),
           ),
         ],
       ),
     );
   }
+
+  Widget _subRow(String label, int amount) {
+    return Padding(
+      padding: const EdgeInsets.only(left: 20, top: 2, bottom: 2),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(
+            label,
+            style: const TextStyle(fontSize: 13, color: AppColors.outline),
+          ),
+          Text(
+            formatManYen(amount),
+            style: const TextStyle(fontSize: 13, color: AppColors.outline),
+          ),
+        ],
+      ),
+    );
+  }
 }
+
+enum _BreakdownKind { expense, credit, result }
 
 class SummaryHeroCard extends StatelessWidget {
   const SummaryHeroCard({super.key, required this.result});

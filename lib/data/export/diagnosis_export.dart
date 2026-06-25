@@ -17,9 +17,11 @@ Map<String, dynamic> diagnosisInputToJson(DiagnosisInput input) {
     'housingType': input.housingType,
     'mortgageBalance': input.mortgageBalance,
     'monthlyRent': input.monthlyRent,
+    'hasGroupCreditLifeInsurance': input.hasGroupCreditLifeInsurance,
     'retirementMonthlyExpense': input.retirementMonthlyExpense,
     'lifeInsurance': input.lifeInsurance,
     'termInsurance': input.termInsurance,
+    'termInsuranceEndAge': input.termInsuranceEndAge,
     'incomeProtectionMonthly': input.incomeProtectionMonthly,
     'incomeProtectionYears': input.incomeProtectionYears,
     'retirementPay': input.retirementPay,
@@ -27,6 +29,8 @@ Map<String, dynamic> diagnosisInputToJson(DiagnosisInput input) {
     'pensionMode': input.pensionMode,
     'manualPensionAnnual': input.manualPensionAnnual,
     'workingYears': input.workingYears,
+    'insuredEmploymentType': input.insuredEmploymentType,
+    'insuredWorkTypeRaw': input.insuredWorkTypeRaw,
     'childrenSchoolTypes': input.normalizedChildSchoolTypes(),
   };
 }
@@ -39,6 +43,7 @@ Map<String, dynamic> diagnosisResultToJson(DiagnosisResult result) {
     'requiredAmount': result.requiredAmount,
     'existingCoverage': result.existingCoverage,
     'survivorPension': result.survivorPension,
+    'survivorWorkIncome': result.survivorWorkIncome,
     'gap': result.gap,
     'livingExpense': result.livingExpense,
     'educationFee': result.educationFee,

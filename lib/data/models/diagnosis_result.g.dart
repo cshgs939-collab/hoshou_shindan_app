@@ -23,6 +23,7 @@ class DiagnosisResultAdapter extends TypeAdapter<DiagnosisResult> {
       requiredAmount: fields[3] as int,
       existingCoverage: fields[4] as int,
       survivorPension: fields[5] as int,
+      survivorWorkIncome: fields[13] == null ? 0 : fields[13] as int,
       gap: fields[6] as int,
       livingExpense: fields[7] as int,
       educationFee: fields[8] as int,
@@ -36,7 +37,7 @@ class DiagnosisResultAdapter extends TypeAdapter<DiagnosisResult> {
   @override
   void write(BinaryWriter writer, DiagnosisResult obj) {
     writer
-      ..writeByte(13)
+      ..writeByte(14)
       ..writeByte(0)
       ..write(obj.id)
       ..writeByte(1)
@@ -49,6 +50,8 @@ class DiagnosisResultAdapter extends TypeAdapter<DiagnosisResult> {
       ..write(obj.existingCoverage)
       ..writeByte(5)
       ..write(obj.survivorPension)
+      ..writeByte(13)
+      ..write(obj.survivorWorkIncome)
       ..writeByte(6)
       ..write(obj.gap)
       ..writeByte(7)

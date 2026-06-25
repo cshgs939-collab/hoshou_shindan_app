@@ -14,6 +14,8 @@ import '../../providers/diagnosis_input_provider.dart';
 import '../../providers/export_provider.dart';
 import '../../providers/history_provider.dart';
 import '../../widgets/primary_button.dart';
+import '../../widgets/calculation_explanation_panel.dart';
+import '../../widgets/insurance_period_panel.dart';
 import 'widgets/result_widgets.dart';
 
 class ResultDashboardScreen extends ConsumerWidget {
@@ -34,7 +36,9 @@ class ResultDashboardScreen extends ConsumerWidget {
       );
     }
 
-    final advice = buildAdviceText(result);
+    final advice = input != null
+        ? buildAdviceText(input, result)
+        : '試算結果をご確認ください。';
 
     return Scaffold(
       appBar: AppBar(
@@ -90,7 +94,13 @@ class ResultDashboardScreen extends ConsumerWidget {
             ),
           ),
           const SizedBox(height: 16),
-          BreakdownCard(result: result),
+          BreakdownCard(result: result, input: input),
+          if (input != null) ...[
+            const SizedBox(height: 16),
+            InsurancePeriodPanel(input: input),
+            const SizedBox(height: 16),
+            CalculationExplanationPanel(input: input, result: result),
+          ],
           const SizedBox(height: 16),
           Card(
             child: Padding(

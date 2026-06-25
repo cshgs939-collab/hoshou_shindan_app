@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 
@@ -98,6 +99,18 @@ Future<HiveRepository> initHiveRepository() async {
   Hive.registerAdapter(AppSettingsAdapter());
 
   final encryption = HiveEncryption();
+  try {
+    return await _openHiveRepository(encryption);
+  } catch (e) {
+    if (kDebugMode) {
+      debugPrint('Hive init failed, clearing storage and retrying: $e');
+    }
+    await clearAllHiveStorage(encryption);
+    return _openHiveRepository(encryption);
+  }
+}
+
+Future<HiveRepository> _openHiveRepository(HiveEncryption encryption) async {
   final cipher = await encryption.getCipher();
   final migrated = await encryption.isMigrated();
 

@@ -2,6 +2,7 @@ import 'package:hive/hive.dart';
 import 'package:uuid/uuid.dart';
 
 import '../../core/enums/housing_type.dart';
+import '../../core/enums/insured_employment_type.dart';
 import '../../core/enums/pension_mode.dart';
 import '../../core/enums/school_type.dart';
 
@@ -24,22 +25,28 @@ class DiagnosisInput extends HiveObject {
     int? housingType,
     this.mortgageBalance,
     this.monthlyRent,
+    this.hasGroupCreditLifeInsurance = true,
     this.retirementMonthlyExpense = 20,
     this.lifeInsurance = 0,
     this.termInsurance = 0,
     this.incomeProtectionMonthly = 0,
     this.incomeProtectionYears = 0,
+    this.termInsuranceEndAge = 0,
     this.retirementPay = 0,
     this.financialAssets = 0,
     int? pensionMode,
     this.manualPensionAnnual,
     this.workingYears,
+    int? insuredEmploymentType,
+    this.insuredWorkTypeRaw = -1,
     this.childrenSchoolTypes = const [],
   })  : spouseEmploymentType =
             spouseEmploymentType ?? SpouseEmploymentType.fullTime.index,
         schoolType = schoolType ?? EducationPolicy.publicAll.index,
         housingType = housingType ?? HousingType.renting.index,
-        pensionMode = pensionMode ?? SurvivorPensionMode.auto.index;
+        pensionMode = pensionMode ?? SurvivorPensionMode.auto.index,
+        insuredEmploymentType = insuredEmploymentType ??
+            InsuredEmploymentType.companyEmployee.index;
 
   factory DiagnosisInput.empty() {
     return DiagnosisInput(
@@ -98,6 +105,9 @@ class DiagnosisInput extends HiveObject {
   @HiveField(13)
   int? monthlyRent;
 
+  @HiveField(25, defaultValue: true)
+  bool hasGroupCreditLifeInsurance;
+
   @HiveField(14)
   int retirementMonthlyExpense;
 
@@ -112,6 +122,9 @@ class DiagnosisInput extends HiveObject {
 
   @HiveField(18)
   int incomeProtectionYears;
+
+  @HiveField(27, defaultValue: 0)
+  int termInsuranceEndAge;
 
   @HiveField(19)
   int retirementPay;
@@ -128,11 +141,28 @@ class DiagnosisInput extends HiveObject {
   @HiveField(23)
   int? workingYears;
 
-  @HiveField(24)
+  @HiveField(24, defaultValue: [])
   List<int> childrenSchoolTypes;
+
+  @HiveField(26, defaultValue: 0)
+  int insuredEmploymentType;
+
+  /// あなた（世帯主）の就業状況。SpouseEmploymentType の index。-1 は未設定（旧データ）。
+  @HiveField(28, defaultValue: -1)
+  int insuredWorkTypeRaw;
 
   SpouseEmploymentType get employmentType =>
       SpouseEmploymentType.values[spouseEmploymentType];
+
+  SpouseEmploymentType get insuredWorkType {
+    if (insuredWorkTypeRaw >= 0 &&
+        insuredWorkTypeRaw < SpouseEmploymentType.values.length) {
+      return SpouseEmploymentType.values[insuredWorkTypeRaw];
+    }
+    return insuredEmploymentType == InsuredEmploymentType.selfEmployed.index
+        ? SpouseEmploymentType.selfEmployed
+        : SpouseEmploymentType.fullTime;
+  }
 
   EducationPolicy get educationPolicy =>
       EducationPolicy.values[schoolType];
@@ -141,6 +171,9 @@ class DiagnosisInput extends HiveObject {
 
   SurvivorPensionMode get survivorPensionMode =>
       SurvivorPensionMode.values[pensionMode];
+
+  InsuredEmploymentType get insuredEmployment =>
+      InsuredEmploymentType.values[insuredEmploymentType];
 
   int get youngestChildAge =>
       childrenAges.isEmpty ? 0 : childrenAges.reduce((a, b) => a < b ? a : b);
@@ -184,16 +217,20 @@ class DiagnosisInput extends HiveObject {
     int? housingType,
     int? mortgageBalance,
     int? monthlyRent,
+    bool? hasGroupCreditLifeInsurance,
     int? retirementMonthlyExpense,
     int? lifeInsurance,
     int? termInsurance,
     int? incomeProtectionMonthly,
     int? incomeProtectionYears,
+    int? termInsuranceEndAge,
     int? retirementPay,
     int? financialAssets,
     int? pensionMode,
     int? manualPensionAnnual,
     int? workingYears,
+    int? insuredEmploymentType,
+    int? insuredWorkTypeRaw,
     List<int>? childrenSchoolTypes,
     bool clearSpouseAge = false,
     bool clearMortgageBalance = false,
@@ -220,6 +257,8 @@ class DiagnosisInput extends HiveObject {
           : (mortgageBalance ?? this.mortgageBalance),
       monthlyRent:
           clearMonthlyRent ? null : (monthlyRent ?? this.monthlyRent),
+      hasGroupCreditLifeInsurance:
+          hasGroupCreditLifeInsurance ?? this.hasGroupCreditLifeInsurance,
       retirementMonthlyExpense:
           retirementMonthlyExpense ?? this.retirementMonthlyExpense,
       lifeInsurance: lifeInsurance ?? this.lifeInsurance,
@@ -228,6 +267,7 @@ class DiagnosisInput extends HiveObject {
           incomeProtectionMonthly ?? this.incomeProtectionMonthly,
       incomeProtectionYears:
           incomeProtectionYears ?? this.incomeProtectionYears,
+      termInsuranceEndAge: termInsuranceEndAge ?? this.termInsuranceEndAge,
       retirementPay: retirementPay ?? this.retirementPay,
       financialAssets: financialAssets ?? this.financialAssets,
       pensionMode: pensionMode ?? this.pensionMode,
@@ -236,6 +276,9 @@ class DiagnosisInput extends HiveObject {
           : (manualPensionAnnual ?? this.manualPensionAnnual),
       workingYears:
           clearWorkingYears ? null : (workingYears ?? this.workingYears),
+      insuredEmploymentType:
+          insuredEmploymentType ?? this.insuredEmploymentType,
+      insuredWorkTypeRaw: insuredWorkTypeRaw ?? this.insuredWorkTypeRaw,
       childrenSchoolTypes: childrenSchoolTypes ??
           List<int>.from(this.childrenSchoolTypes),
     );

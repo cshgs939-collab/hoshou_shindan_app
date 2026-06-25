@@ -20,6 +20,8 @@
 
 | ファイル | 内容 |
 |---|---|
+| [GITHUB_PAGES.md](./GITHUB_PAGES.md) | **GitHub Pages 公開・外出先利用（日本語ガイド）** |
+| [WEB_IPHONE.md](./WEB_IPHONE.md) | iPhone で Web 版を使う |
 | [DEVICE_TESTING.md](./DEVICE_TESTING.md) | Android / iOS 実機・エミュレータ確認手順 |
 
 ## 新規ドキュメント追加時

@@ -48,6 +48,8 @@ class AgeSliderField extends StatelessWidget {
     required this.onChanged,
     this.min = 20,
     this.max = 79,
+    this.valueSuffix = '歳',
+    this.helper,
   });
 
   final String label;
@@ -55,6 +57,8 @@ class AgeSliderField extends StatelessWidget {
   final ValueChanged<int> onChanged;
   final int min;
   final int max;
+  final String valueSuffix;
+  final String? helper;
 
   @override
   Widget build(BuildContext context) {
@@ -62,6 +66,15 @@ class AgeSliderField extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(label, style: Theme.of(context).textTheme.titleMedium),
+        if (helper != null) ...[
+          const SizedBox(height: 4),
+          Text(
+            helper!,
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: AppColors.outline,
+                ),
+          ),
+        ],
         const SizedBox(height: 8),
         Container(
           padding: const EdgeInsets.all(16),
@@ -72,21 +85,24 @@ class AgeSliderField extends StatelessWidget {
           ),
           child: Column(
             children: [
-              Text('$value歳', style: Theme.of(context).textTheme.headlineSmall),
+              Text(
+                '$value$valueSuffix',
+                style: Theme.of(context).textTheme.headlineSmall,
+              ),
               Slider(
                 key: Key('${label}_slider'),
                 value: value.toDouble(),
                 min: min.toDouble(),
                 max: max.toDouble(),
                 divisions: max - min,
-                label: '$value歳',
+                label: '$value$valueSuffix',
                 onChanged: (v) => onChanged(v.round()),
               ),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text('$min'),
-                  Text('$max'),
+                  Text('$min$valueSuffix'),
+                  Text('$max$valueSuffix'),
                 ],
               ),
             ],

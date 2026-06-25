@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hoshou_shindan_app/core/constants/education_costs.dart';
 import 'package:hoshou_shindan_app/core/enums/housing_type.dart';
@@ -55,6 +57,42 @@ void main() {
     });
   });
 
+  group('老後生活費', () {
+    test('65歳から老後期間を算定する（配偶者33歳）', () {
+      final input = _sampleInput();
+      expect(calcSurvivorLivingYears(input, 19), 32);
+      expect(calcRetirementYears(input), 22);
+    });
+
+    test('配偶者が65歳以上なら老後のみ', () {
+      final input = _sampleInput().copyWith(spouseAge: 70);
+      expect(calcSurvivorLivingYears(input, 19), 0);
+      expect(calcRetirementYears(input), 20);
+    });
+
+    test('生活費は年金と就労収入を控除した不足分', () {
+      final input = _sampleInput(monthlyExpense: 30);
+      final result = CalculationEngine().calculate(input);
+      expect(result.livingExpense, greaterThanOrEqualTo(0));
+      expect(result.survivorWorkIncome, greaterThan(0));
+    });
+
+    test('団信加入時は住宅ローン残債を住居費に含めない', () {
+      final withCredit = _sampleInput(
+        housingType: HousingType.mortgaged,
+        mortgageBalance: 3000,
+      ).copyWith(hasGroupCreditLifeInsurance: true);
+      final withoutCredit = withCredit.copyWith(
+        hasGroupCreditLifeInsurance: false,
+      );
+      expect(CalculationEngine().calculate(withCredit).housingFee, 0);
+      expect(
+        CalculationEngine().calculate(withoutCredit).housingFee,
+        3000,
+      );
+    });
+  });
+
   group('CalculationEngine', () {
     final engine = CalculationEngine();
 
@@ -84,18 +122,16 @@ void main() {
         _sampleInput(
           housingType: HousingType.mortgaged,
           mortgageBalance: 3000,
-        ),
+        ).copyWith(hasGroupCreditLifeInsurance: false),
       );
       expect(result.housingFee, 3000);
     });
 
-    test('不足額は必要 - 既存 - 遺族年金', () {
+    test('不足額は必要 − 既存（年金は生活費に反映済み）', () {
       final result = engine.calculate(_sampleInput());
       expect(
         result.gap,
-        result.requiredAmount -
-            result.existingCoverage -
-            result.survivorPension,
+        result.requiredAmount - result.existingCoverage,
       );
     });
   });

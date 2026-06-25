@@ -31,24 +31,30 @@ class DiagnosisInputAdapter extends TypeAdapter<DiagnosisInput> {
       housingType: fields[11] as int?,
       mortgageBalance: fields[12] as int?,
       monthlyRent: fields[13] as int?,
+      hasGroupCreditLifeInsurance:
+          fields[25] == null ? true : fields[25] as bool,
       retirementMonthlyExpense: fields[14] as int,
       lifeInsurance: fields[15] as int,
       termInsurance: fields[16] as int,
       incomeProtectionMonthly: fields[17] as int,
       incomeProtectionYears: fields[18] as int,
+      termInsuranceEndAge: fields[27] == null ? 0 : fields[27] as int,
       retirementPay: fields[19] as int,
       financialAssets: fields[20] as int,
       pensionMode: fields[21] as int?,
       manualPensionAnnual: fields[22] as int?,
       workingYears: fields[23] as int?,
-      childrenSchoolTypes: (fields[24] as List).cast<int>(),
+      insuredEmploymentType: fields[26] == null ? 0 : fields[26] as int?,
+      insuredWorkTypeRaw: fields[28] == null ? -1 : fields[28] as int,
+      childrenSchoolTypes:
+          fields[24] == null ? [] : (fields[24] as List).cast<int>(),
     );
   }
 
   @override
   void write(BinaryWriter writer, DiagnosisInput obj) {
     writer
-      ..writeByte(25)
+      ..writeByte(29)
       ..writeByte(0)
       ..write(obj.id)
       ..writeByte(1)
@@ -77,6 +83,8 @@ class DiagnosisInputAdapter extends TypeAdapter<DiagnosisInput> {
       ..write(obj.mortgageBalance)
       ..writeByte(13)
       ..write(obj.monthlyRent)
+      ..writeByte(25)
+      ..write(obj.hasGroupCreditLifeInsurance)
       ..writeByte(14)
       ..write(obj.retirementMonthlyExpense)
       ..writeByte(15)
@@ -87,6 +95,8 @@ class DiagnosisInputAdapter extends TypeAdapter<DiagnosisInput> {
       ..write(obj.incomeProtectionMonthly)
       ..writeByte(18)
       ..write(obj.incomeProtectionYears)
+      ..writeByte(27)
+      ..write(obj.termInsuranceEndAge)
       ..writeByte(19)
       ..write(obj.retirementPay)
       ..writeByte(20)
@@ -98,7 +108,11 @@ class DiagnosisInputAdapter extends TypeAdapter<DiagnosisInput> {
       ..writeByte(23)
       ..write(obj.workingYears)
       ..writeByte(24)
-      ..write(obj.childrenSchoolTypes);
+      ..write(obj.childrenSchoolTypes)
+      ..writeByte(26)
+      ..write(obj.insuredEmploymentType)
+      ..writeByte(28)
+      ..write(obj.insuredWorkTypeRaw);
   }
 
   @override

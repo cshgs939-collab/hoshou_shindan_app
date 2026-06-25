@@ -1,5 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../core/enums/insured_employment_type.dart';
+import '../../core/enums/pension_mode.dart';
 import '../../core/enums/school_type.dart';
 import '../../data/models/diagnosis_input.dart';
 import '../../data/repositories/hive_repository.dart';
@@ -131,6 +133,11 @@ class DiagnosisInputNotifier extends StateNotifier<DiagnosisInput> {
     _persistDraft();
   }
 
+  void updateHasGroupCreditLifeInsurance(bool value) {
+    state = state.copyWith(hasGroupCreditLifeInsurance: value);
+    _persistDraft();
+  }
+
   void updateMonthlyRent(int? rent) {
     state = state.copyWith(
       monthlyRent: rent,
@@ -164,6 +171,11 @@ class DiagnosisInputNotifier extends StateNotifier<DiagnosisInput> {
     _persistDraft();
   }
 
+  void updateTermInsuranceEndAge(int value) {
+    state = state.copyWith(termInsuranceEndAge: value);
+    _persistDraft();
+  }
+
   void updateRetirementPay(int value) {
     state = state.copyWith(retirementPay: value);
     _persistDraft();
@@ -191,6 +203,26 @@ class DiagnosisInputNotifier extends StateNotifier<DiagnosisInput> {
     state = state.copyWith(
       workingYears: value,
       clearWorkingYears: value == null,
+    );
+    _persistDraft();
+  }
+
+  void updateInsuredEmploymentType(int index) {
+    final workType = index == InsuredEmploymentType.selfEmployed.index
+        ? SpouseEmploymentType.selfEmployed.index
+        : SpouseEmploymentType.fullTime.index;
+    updateInsuredWorkType(workType);
+  }
+
+  void updateInsuredWorkType(int index) {
+    final legacyPension =
+        index == SpouseEmploymentType.selfEmployed.index ||
+                index == SpouseEmploymentType.unemployed.index
+            ? InsuredEmploymentType.selfEmployed.index
+            : InsuredEmploymentType.companyEmployee.index;
+    state = state.copyWith(
+      insuredWorkTypeRaw: index,
+      insuredEmploymentType: legacyPension,
     );
     _persistDraft();
   }

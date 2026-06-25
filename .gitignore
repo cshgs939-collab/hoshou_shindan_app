@@ -50,3 +50,6 @@ app.*.map.json
 
 # Cursor local config
 .cursor/
+
+# ローカル生成物（QR 等）
+/outputs/

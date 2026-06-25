@@ -45,7 +45,7 @@ class DiagnosisPdfExporter {
     required DiagnosisResult result,
   }) async {
     final font = await _loadFont();
-    final advice = buildAdviceText(result);
+    final advice = buildAdviceText(input, result);
     final doc = pw.Document();
 
     doc.addPage(
@@ -187,7 +187,15 @@ class DiagnosisPdfExporter {
   }
 
   pw.Widget _breakdownTable(pw.Font font, DiagnosisResult result) {
-    pw.TableRow row(String label, int amount, {bool bold = false}) {
+    pw.TableRow row(
+      String label,
+      int amount, {
+      bool bold = false,
+      bool credit = false,
+    }) {
+      final text = credit
+          ? (amount == 0 ? formatManYen(0) : '+${formatManYen(amount)}')
+          : formatManYen(amount);
       return pw.TableRow(
         children: [
           pw.Padding(
@@ -205,9 +213,7 @@ class DiagnosisPdfExporter {
             child: pw.Align(
               alignment: pw.Alignment.centerRight,
               child: pw.Text(
-                amount < 0
-                    ? '-${formatManYen(amount.abs())}'
-                    : formatManYen(amount),
+                text,
                 style: pw.TextStyle(
                   font: font,
                   fontWeight: bold ? pw.FontWeight.bold : pw.FontWeight.normal,
@@ -228,13 +234,12 @@ class DiagnosisPdfExporter {
         1: const pw.FlexColumnWidth(1),
       },
       children: [
-        row('遺族生活費', result.livingExpense),
+        row('生活費不足分', result.livingExpense),
         row('教育費', result.educationFee),
         row('住居費', result.housingFee),
         row('葬儀等', result.funeralFee),
-        row('合計', result.requiredAmount, bold: true),
-        row('遺族年金', -result.survivorPension),
-        row('既存保障', -result.existingCoverage),
+        row('合計（必要額）', result.requiredAmount, bold: true),
+        row('既存保障', result.existingCoverage, credit: true),
         row('不足額', result.gap, bold: true),
       ],
     );

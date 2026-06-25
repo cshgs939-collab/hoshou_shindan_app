@@ -1,10 +1,13 @@
 import 'dart:math';
 
 import '../../core/constants/education_costs.dart';
+import '../../core/constants/pension_constants.dart';
 import '../../core/enums/housing_type.dart';
 import '../../core/enums/pension_mode.dart';
+import '../../core/utils/employment_advice.dart';
 import '../../data/models/diagnosis_input.dart';
 import '../../data/models/diagnosis_result.dart';
+import 'survivor_pension_calculator.dart';
 
 const int funeralAndEmergencyFee = 300;
 const int childIndependenceAge = 22;
@@ -21,9 +24,10 @@ class CalculationEngine {
 
     final existingCoverage = calcExistingCoverage(input);
     final survivorPension = input.survivorPensionMode == SurvivorPensionMode.auto
-        ? calcTotalSurvivorPension(input)
+        ? calcTotalSurvivorPensionLifetime(input)
         : calcManualSurvivorPension(input);
-    final gap = requiredTotal - existingCoverage - survivorPension;
+    final survivorWorkIncome = calcTotalSurvivorWorkIncome(input);
+    final gap = requiredTotal - existingCoverage;
 
     return DiagnosisResult(
       id: '${input.id}_result',
@@ -32,6 +36,7 @@ class CalculationEngine {
       requiredAmount: requiredTotal,
       existingCoverage: existingCoverage,
       survivorPension: survivorPension,
+      survivorWorkIncome: survivorWorkIncome,
       gap: gap,
       livingExpense: livingExpense,
       educationFee: educationFee,
@@ -43,24 +48,99 @@ class CalculationEngine {
   }
 }
 
+/// 生活費不足分＝（必要月額−遺族年金−配偶者就労）× 年数（就労は65歳まで）
 int calcLivingExpense(DiagnosisInput input) {
   if (!input.hasSpouse && input.childrenAges.isEmpty) {
     return 0;
   }
 
-  final coefficient = _livingExpenseCoefficient(input);
-  final monthlySurvivorExpense = (input.monthlyExpense * coefficient).round();
+  return calcPreRetirementLivingExpense(input) +
+      calcRetirementLivingExpense(input);
+}
 
-  final yearsUntilYoungestIndependent =
-      calcYearsUntilYoungestIndependent(input);
-  final childRearingCost =
-      monthlySurvivorExpense * 12 * yearsUntilYoungestIndependent;
+int calcPreRetirementLivingExpense(DiagnosisInput input) {
+  final spouseAge = input.spouseAge ?? input.age;
+  if (spouseAge >= retirementStartAge) return 0;
 
-  final retirementYears = calcRetirementYears(input, yearsUntilYoungestIndependent);
-  final retirementMonthly = input.retirementMonthlyExpense;
-  final retirementCost = retirementMonthly * 12 * max(0, retirementYears);
+  final yearsTo65 = retirementStartAge - spouseAge;
+  if (yearsTo65 <= 0) return 0;
 
-  return childRearingCost + retirementCost.round();
+  final monthlyNeed =
+      (_monthlyLivingExpenseBase(input) * _livingExpenseCoefficient(input))
+          .round();
+  final workMonthly = estimateSurvivorWorkMonthly(input);
+  final childYears = min(calcYearsUntilChild18End(input), yearsTo65);
+  final afterChildYears = yearsTo65 - childYears;
+
+  var total = 0;
+  if (childYears > 0) {
+    final pensionMonthly = _monthlyPensionForPhase(
+      input,
+      SurvivorPensionPhaseKind.withChild,
+    );
+    total += _phaseShortfall(
+      monthlyNeed: monthlyNeed,
+      pensionMonthly: pensionMonthly,
+      workMonthly: workMonthly,
+      years: childYears,
+    );
+  }
+  if (afterChildYears > 0) {
+    final pensionMonthly = _monthlyPensionForPhase(
+      input,
+      SurvivorPensionPhaseKind.afterChildBefore65,
+    );
+    total += _phaseShortfall(
+      monthlyNeed: monthlyNeed,
+      pensionMonthly: pensionMonthly,
+      workMonthly: workMonthly,
+      years: afterChildYears,
+    );
+  }
+  return total;
+}
+
+int calcRetirementLivingExpense(DiagnosisInput input) {
+  final years = calcRetirementYears(input);
+  if (years <= 0) return 0;
+
+  final monthlyNeed = input.retirementMonthlyExpense;
+  final pensionMonthly = _monthlyPensionForPhase(
+    input,
+    SurvivorPensionPhaseKind.after65,
+  );
+  return _phaseShortfall(
+    monthlyNeed: monthlyNeed,
+    pensionMonthly: pensionMonthly,
+    workMonthly: 0,
+    years: years,
+  );
+}
+
+int _phaseShortfall({
+  required int monthlyNeed,
+  required int pensionMonthly,
+  required int workMonthly,
+  required int years,
+}) {
+  return max(0, monthlyNeed - pensionMonthly - workMonthly) * 12 * years;
+}
+
+int _monthlyPensionForPhase(
+  DiagnosisInput input,
+  SurvivorPensionPhaseKind kind,
+) {
+  final annual = calcSurvivorPensionAnnualForPhase(input, kind);
+  return max(0, (annual / 12).round());
+}
+
+int _monthlyLivingExpenseBase(DiagnosisInput input) {
+  if (input.residenceType == HousingType.renting &&
+      input.monthlyRent != null &&
+      input.monthlyRent! > 0) {
+    return max(0, input.monthlyExpense - input.monthlyRent!);
+  }
+  return input.monthlyExpense;
 }
 
 double _livingExpenseCoefficient(DiagnosisInput input) {
@@ -76,20 +156,31 @@ int calcYearsUntilYoungestIndependent(DiagnosisInput input) {
   return max(0, childIndependenceAge - input.youngestChildAge);
 }
 
-int calcRetirementYears(
+int calcSurvivorLivingYears(
   DiagnosisInput input,
   int yearsUntilYoungestIndependent,
 ) {
+  if (!input.hasSpouse || input.spouseAge == null) {
+    return yearsUntilYoungestIndependent;
+  }
+  final spouseAge = input.spouseAge!;
+  if (spouseAge >= retirementStartAge) return 0;
+  return retirementStartAge - spouseAge;
+}
+
+int calcRetirementYears(DiagnosisInput input) {
   if (!input.hasSpouse || input.spouseAge == null) return 0;
 
-  final spouseLifeExpectancy = _estimateSpouseLifeExpectancy(input.spouseAge!);
-  final yearsAfterIndependence = spouseLifeExpectancy -
-      (input.spouseAge! + yearsUntilYoungestIndependent);
-  return max(0, yearsAfterIndependence);
+  final lifeEndAge = _estimateSpouseLifeExpectancy(input.spouseAge!);
+  if (lifeEndAge <= retirementStartAge) return 0;
+
+  if (input.spouseAge! >= retirementStartAge) {
+    return lifeEndAge - input.spouseAge!;
+  }
+  return lifeEndAge - retirementStartAge;
 }
 
 int _estimateSpouseLifeExpectancy(int spouseAge) {
-  // 簡易: 現在年齢から平均余命を引いた残年数 + 現在年齢
   final remaining = spouseAge < 65 ? femaleLifeExpectancy - spouseAge : 20;
   return spouseAge + remaining;
 }
@@ -109,6 +200,7 @@ int calcTotalEducationFee(DiagnosisInput input) {
 int calcHousingFee(DiagnosisInput input) {
   switch (input.residenceType) {
     case HousingType.mortgaged:
+      if (input.hasGroupCreditLifeInsurance) return 0;
       return input.mortgageBalance ?? 0;
     case HousingType.renting:
       final totalYears = calcRemainingLivingYears(input);
@@ -120,8 +212,9 @@ int calcHousingFee(DiagnosisInput input) {
 
 int calcRemainingLivingYears(DiagnosisInput input) {
   final childYears = calcYearsUntilYoungestIndependent(input);
-  final retirementYears = calcRetirementYears(input, childYears);
-  return childYears + retirementYears;
+  final survivorYears = calcSurvivorLivingYears(input, childYears);
+  final retirementYears = calcRetirementYears(input);
+  return survivorYears + retirementYears;
 }
 
 int calcExistingCoverage(DiagnosisInput input) {
@@ -135,56 +228,59 @@ int calcExistingCoverage(DiagnosisInput input) {
       input.financialAssets;
 }
 
-double calcSurvivorPensionAnnual(int annualIncome, int workingYears) {
-  final monthlyStandardWage = (annualIncome * 10000) / 12;
-  final insuredMonths = max(workingYears * 12, 300);
-  final survivorPension = monthlyStandardWage *
-      (5.481 / 1000) *
-      insuredMonths *
-      0.75;
-  return survivorPension / 10000;
-}
-
-int calcChildAddition(int numChildren) {
-  if (numChildren == 0) return 0;
-  var addition = 0;
-  for (var i = 0; i < numChildren; i++) {
-    addition += i < 2 ? 23 : 8;
-  }
-  return addition;
-}
-
-int calcTotalSurvivorPension(DiagnosisInput input) {
-  final annualPension = calcSurvivorPensionAnnual(
-    input.annualIncome,
-    input.workingYears ?? 20,
-  ).round();
-  final childAddition = calcChildAddition(input.childrenAges.length);
-  final totalAnnual = annualPension + childAddition;
-  final receivingYears = input.childrenAges.isEmpty
-      ? 10
-      : max(0, childIndependenceAge - input.youngestChildAge);
-  return totalAnnual * receivingYears;
-}
-
 int calcManualSurvivorPension(DiagnosisInput input) {
   final annual = input.manualPensionAnnual ?? 0;
   final years = calcRemainingLivingYears(input);
   return annual * max(years, 1);
 }
 
-String buildAdviceText(DiagnosisResult result) {
+// 後方互換（テスト・旧呼び出し）
+int calcMonthlySurvivorPension(
+  DiagnosisInput input, {
+  bool withChildAddition = false,
+}) {
+  final kind = withChildAddition
+      ? SurvivorPensionPhaseKind.withChild
+      : SurvivorPensionPhaseKind.afterChildBefore65;
+  return _monthlyPensionForPhase(input, kind);
+}
+
+String buildAdviceText(DiagnosisInput input, DiagnosisResult result) {
+  final parts = <String>[];
+  final coverage = describeInsuredIncomeCoverage(input);
+
+  if (coverage != null && coverage.uncoveredMonthlyMan > 0) {
+    parts.add(
+      'あなたの年収（月${coverage.monthlyIncomeMan}万円相当）のうち、'
+      '公的年金（遺族年金）の概算は月${coverage.monthlyPensionMan}万円です。'
+      '約${coverage.uncoveredMonthlyMan}万円/月は公的年金では補えません。',
+    );
+    parts.add(
+      'この収入不足分に加え、生活費・教育費・住居費なども'
+      '生命保険等で備える必要があります。',
+    );
+  }
+
   if (result.gap > 0) {
+    parts.add('試算では、既存の保障を差し引いた不足額は約${result.gap}万円です。');
     final monthlyPremium = (result.gap * 0.0022).round();
-    return '定期保険（掛捨型）で${result.gap}万円を確保すると、'
-        '月々約${_formatPremium(monthlyPremium)}円〜が目安です。';
+    parts.add(
+      '定期保険（掛捨型）で全額を確保すると、'
+      '月々約${_formatPremium(monthlyPremium)}円〜が目安です。',
+    );
+  } else if (result.gap < 0) {
+    parts.add(
+      '現在の保障は必要額を上回っています。'
+      '保険料の見直しで家計の余力を増やせる可能性があります。',
+    );
+  } else if (parts.isEmpty) {
+    parts.add(
+      '必要保障額と既存保障が概ね一致しています。'
+      'ライフステージの変化に合わせて定期的な見直しをおすすめします。',
+    );
   }
-  if (result.gap < 0) {
-    return '現在の保障は必要額を上回っています。'
-        '保険料の見直しで家計の余力を増やせる可能性があります。';
-  }
-  return '必要保障額と既存保障が概ね一致しています。'
-      'ライフステージの変化に合わせて定期的な見直しをおすすめします。';
+
+  return parts.join(' ');
 }
 
 String _formatPremium(int yen) {

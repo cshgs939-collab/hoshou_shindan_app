@@ -67,6 +67,17 @@ class HiveEncryption {
     }
     await _storage!.write(key: _migrationFlagName, value: 'true');
   }
+
+  Future<void> clearStorageKeys() async {
+    if (kIsWeb) {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.remove(_encryptionKeyName);
+      await prefs.remove(_migrationFlagName);
+      return;
+    }
+    await _storage!.delete(key: _encryptionKeyName);
+    await _storage!.delete(key: _migrationFlagName);
+  }
 }
 
 class HiveMigrationData {
@@ -162,8 +173,36 @@ Future<void> restoreToEncryptedBoxes({
 Future<Box<T>> openEncryptedBox<T>(
   String name,
   HiveAesCipher cipher,
-) {
-  return Hive.openBox<T>(name, encryptionCipher: cipher);
+) async {
+  try {
+    return await Hive.openBox<T>(name, encryptionCipher: cipher);
+  } catch (e) {
+    if (kDebugMode) {
+      debugPrint('Hive box "$name" open failed, recreating: $e');
+    }
+    try {
+      await Hive.deleteBoxFromDisk(name);
+    } catch (_) {}
+    return Hive.openBox<T>(name, encryptionCipher: cipher);
+  }
+}
+
+Future<void> clearAllHiveStorage(HiveEncryption encryption) async {
+  for (final name in [
+    'diagnosisInputBox',
+    'diagnosisResultBox',
+    'appSettingsBox',
+  ]) {
+    try {
+      if (await Hive.boxExists(name)) {
+        final box = await Hive.openBox(name);
+        await box.close();
+        await Hive.deleteBoxFromDisk(name);
+      }
+    } catch (_) {}
+  }
+
+  await encryption.clearStorageKeys();
 }
 
 int estimateEncryptedPayloadSize(HiveMigrationData data) {

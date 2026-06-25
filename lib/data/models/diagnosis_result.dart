@@ -11,6 +11,7 @@ class DiagnosisResult extends HiveObject {
     required this.requiredAmount,
     required this.existingCoverage,
     required this.survivorPension,
+    this.survivorWorkIncome = 0,
     required this.gap,
     required this.livingExpense,
     required this.educationFee,
@@ -37,6 +38,9 @@ class DiagnosisResult extends HiveObject {
 
   @HiveField(5)
   int survivorPension;
+
+  @HiveField(13, defaultValue: 0)
+  int survivorWorkIncome;
 
   @HiveField(6)
   int gap;
