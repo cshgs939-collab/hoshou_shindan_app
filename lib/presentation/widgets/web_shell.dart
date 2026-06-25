@@ -22,13 +22,17 @@ class WebShell extends StatelessWidget {
     final frameColor = brightness == Brightness.light
         ? Colors.white
         : const Color(0xFF1A1D21);
+    final media = MediaQuery.of(context);
+    final frameHeight = media.size.height - media.padding.vertical;
 
     return ColoredBox(
       color: outerColor,
       child: SafeArea(
-        child: Center(
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: _maxContentWidth),
+        child: Align(
+          alignment: Alignment.topCenter,
+          child: SizedBox(
+            width: media.size.width.clamp(0, _maxContentWidth),
+            height: frameHeight,
             child: DecoratedBox(
               decoration: BoxDecoration(
                 color: frameColor,

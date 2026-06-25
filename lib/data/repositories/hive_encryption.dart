@@ -1,8 +1,10 @@
 import 'dart:convert';
 import 'dart:math';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:hive/hive.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../models/app_settings.dart';
 import '../models/diagnosis_input.dart';
@@ -13,31 +15,57 @@ const _migrationFlagName = 'hive_encrypted_migrated_v1';
 
 class HiveEncryption {
   HiveEncryption([FlutterSecureStorage? storage])
-      : _storage = storage ?? const FlutterSecureStorage();
+      : _storage = kIsWeb ? null : (storage ?? const FlutterSecureStorage());
 
-  final FlutterSecureStorage _storage;
+  final FlutterSecureStorage? _storage;
 
   Future<HiveAesCipher> getCipher() async {
-    final existing = await _storage.read(key: _encryptionKeyName);
+    if (kIsWeb) {
+      return _getWebCipher();
+    }
+
+    final storage = _storage!;
+    final existing = await storage.read(key: _encryptionKeyName);
     if (existing != null) {
       return HiveAesCipher(base64Url.decode(existing));
     }
 
     final key = Hive.generateSecureKey();
-    await _storage.write(
+    await storage.write(
       key: _encryptionKeyName,
       value: base64UrlEncode(key),
     );
     return HiveAesCipher(key);
   }
 
+  Future<HiveAesCipher> _getWebCipher() async {
+    final prefs = await SharedPreferences.getInstance();
+    final existing = prefs.getString(_encryptionKeyName);
+    if (existing != null) {
+      return HiveAesCipher(base64Url.decode(existing));
+    }
+
+    final key = Hive.generateSecureKey();
+    await prefs.setString(_encryptionKeyName, base64UrlEncode(key));
+    return HiveAesCipher(key);
+  }
+
   Future<bool> isMigrated() async {
-    final flag = await _storage.read(key: _migrationFlagName);
+    if (kIsWeb) {
+      final prefs = await SharedPreferences.getInstance();
+      return prefs.getBool(_migrationFlagName) ?? false;
+    }
+    final flag = await _storage!.read(key: _migrationFlagName);
     return flag == 'true';
   }
 
   Future<void> markMigrated() async {
-    await _storage.write(key: _migrationFlagName, value: 'true');
+    if (kIsWeb) {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setBool(_migrationFlagName, true);
+      return;
+    }
+    await _storage!.write(key: _migrationFlagName, value: 'true');
   }
 }
 
@@ -54,6 +82,8 @@ class HiveMigrationData {
 }
 
 Future<HiveMigrationData?> readLegacyBoxes() async {
+  if (kIsWeb) return null;
+
   final hasAnyBox = await Hive.boxExists('diagnosisInputBox') ||
       await Hive.boxExists('diagnosisResultBox') ||
       await Hive.boxExists('appSettingsBox');
