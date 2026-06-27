@@ -20,6 +20,8 @@
 
 ### 1. GitHub Pages を有効化
 
+> **前提:** 無料プランでは **パブリックリポジトリ** が必要です（2026-06-25 設定済み）。
+
 1. ブラウザでリポジトリを開く  
    https://github.com/cshgs939-collab/hoshou_shindan_app
 2. **Settings** → 左メニュー **Pages**

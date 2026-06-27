@@ -8,7 +8,6 @@ import '../../../core/utils/employment_labels.dart';
 import '../../../core/enums/housing_type.dart';
 import '../../../core/enums/pension_mode.dart';
 import '../../../core/enums/school_type.dart';
-import '../../../domain/scenario/scenario_comparison.dart';
 import '../../../domain/validation/diagnosis_input_validator.dart';
 import '../../providers/diagnosis_input_provider.dart';
 import '../../widgets/number_input_field.dart';
@@ -168,10 +167,10 @@ class Step1Screen extends ConsumerWidget {
                 if (value != null) notifier.updateEducationPolicy(value);
               },
               child: Column(
-                children: EducationPolicy.values
+                children: householdEducationPolicies
                     .map(
                       (policy) => RadioListTile<int>(
-                        title: Text(_educationLabel(policy)),
+                        title: Text(educationPolicyLabel(policy)),
                         value: policy.index,
                       ),
                     )
@@ -197,11 +196,11 @@ class Step1Screen extends ConsumerWidget {
                       child: DropdownButton<int>(
                         isExpanded: true,
                         value: selected.index,
-                        items: ScenarioComparisonService.comparablePolicies
+                        items: childEducationPolicies
                             .map(
                               (policy) => DropdownMenuItem(
                                 value: policy.index,
-                                child: Text(_educationLabel(policy)),
+                                child: Text(educationPolicyLabel(policy)),
                               ),
                             )
                             .toList(),
@@ -228,18 +227,6 @@ class Step1Screen extends ConsumerWidget {
     );
   }
 
-  String _educationLabel(EducationPolicy policy) {
-    switch (policy) {
-      case EducationPolicy.publicAll:
-        return 'すべて公立';
-      case EducationPolicy.privateAll:
-        return 'すべて私立';
-      case EducationPolicy.publicToPrivate:
-        return '高校まで公立、大学私立';
-      case EducationPolicy.custom:
-        return '子ごとに個別設定';
-    }
-  }
 }
 
 class Step2Screen extends ConsumerWidget {

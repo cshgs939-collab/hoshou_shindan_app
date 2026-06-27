@@ -6,6 +6,7 @@ import 'package:printing/printing.dart';
 import '../../core/enums/housing_type.dart';
 import '../../core/utils/formatter.dart';
 import '../../domain/calculation/calculation_engine.dart';
+import '../../domain/calculation/coverage_timeline.dart';
 import '../models/diagnosis_input.dart';
 import '../models/diagnosis_result.dart';
 
@@ -46,6 +47,8 @@ class DiagnosisPdfExporter {
   }) async {
     final font = await _loadFont();
     final advice = buildAdviceText(input, result);
+    final timelinePoints = calcCoverageTimeline(input);
+    final timelineGapAdvice = buildTimelineGapAdvice(timelinePoints);
     final doc = pw.Document();
 
     doc.addPage(
@@ -108,6 +111,62 @@ class DiagnosisPdfExporter {
                 pw.SizedBox(height: 12),
                 pw.Text(
                   '※ 本書は概算試算結果です。実際の必要保障額を保証するものではありません。',
+                  style: pw.TextStyle(font: font, fontSize: 8, color: PdfColors.grey700),
+                ),
+              ],
+            ),
+          );
+        },
+      ),
+    );
+
+    doc.addPage(
+      pw.Page(
+        pageFormat: PdfPageFormat.a4,
+        build: (context) {
+          return pw.DefaultTextStyle(
+            style: pw.TextStyle(font: font, fontSize: 11),
+            child: pw.Column(
+              crossAxisAlignment: pw.CrossAxisAlignment.start,
+              children: [
+                pw.Text(
+                  '保障額の推移',
+                  style: pw.TextStyle(
+                    font: font,
+                    fontSize: 22,
+                    fontWeight: pw.FontWeight.bold,
+                  ),
+                ),
+                pw.SizedBox(height: 4),
+                pw.Text('現在（${input.age}歳）〜 65歳まで'),
+                pw.SizedBox(height: 4),
+                pw.Text(
+                  '単位: 万円　※ 既存保障は生保＋定期保険の合計',
+                  style: pw.TextStyle(font: font, fontSize: 9, color: PdfColors.grey700),
+                ),
+                pw.Divider(),
+                pw.SizedBox(height: 8),
+                _timelineTable(font, timelinePoints),
+                if (timelineGapAdvice != null) ...[
+                  pw.SizedBox(height: 16),
+                  _noteBox(
+                    font,
+                    title: 'ご注意',
+                    body: timelineGapAdvice,
+                    background: PdfColors.red50,
+                  ),
+                ],
+                pw.SizedBox(height: 16),
+                _noteBox(
+                  font,
+                  title: '65歳以降は…',
+                  body: post65MedicalAdvice,
+                  background: PdfColors.blue50,
+                ),
+                pw.Spacer(),
+                pw.Text(
+                  '※ 各年齢時点での試算です。子どもの成長・ローン残債の減少・'
+                  '定期保険満了を反映した概算です。',
                   style: pw.TextStyle(font: font, fontSize: 8, color: PdfColors.grey700),
                 ),
               ],
@@ -242,6 +301,99 @@ class DiagnosisPdfExporter {
         row('既存保障', result.existingCoverage, credit: true),
         row('不足額', result.gap, bold: true),
       ],
+    );
+  }
+
+  pw.Widget _timelineTable(pw.Font font, List<CoverageTimelinePoint> points) {
+    pw.Widget headerCell(String text) {
+      return pw.Padding(
+        padding: const pw.EdgeInsets.symmetric(vertical: 6, horizontal: 4),
+        child: pw.Text(
+          text,
+          style: pw.TextStyle(font: font, fontWeight: pw.FontWeight.bold),
+        ),
+      );
+    }
+
+    pw.Widget dataCell(String text, {bool bold = false}) {
+      return pw.Padding(
+        padding: const pw.EdgeInsets.symmetric(vertical: 4, horizontal: 4),
+        child: pw.Align(
+          alignment: pw.Alignment.centerRight,
+          child: pw.Text(
+            text,
+            style: pw.TextStyle(
+              font: font,
+              fontWeight: bold ? pw.FontWeight.bold : pw.FontWeight.normal,
+            ),
+          ),
+        ),
+      );
+    }
+
+    return pw.Table(
+      border: pw.TableBorder.all(color: PdfColors.grey300),
+      columnWidths: {
+        0: const pw.FlexColumnWidth(1),
+        1: const pw.FlexColumnWidth(1.2),
+        2: const pw.FlexColumnWidth(1.2),
+        3: const pw.FlexColumnWidth(1.2),
+      },
+      children: [
+        pw.TableRow(
+          decoration: const pw.BoxDecoration(color: PdfColors.grey200),
+          children: [
+            headerCell('年齢'),
+            headerCell('必要保障額'),
+            headerCell('既存保障'),
+            headerCell('不足額'),
+          ],
+        ),
+        ...points.map(
+          (point) => pw.TableRow(
+            children: [
+              pw.Padding(
+                padding: const pw.EdgeInsets.symmetric(vertical: 4, horizontal: 4),
+                child: pw.Text('${point.age}歳', style: pw.TextStyle(font: font)),
+              ),
+              dataCell(formatManYen(point.requiredAmount)),
+              dataCell(formatManYen(point.existingCoverage)),
+              dataCell(formatGap(point.gap), bold: true),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  pw.Widget _noteBox(
+    pw.Font font, {
+    required String title,
+    required String body,
+    required PdfColor background,
+  }) {
+    return pw.Container(
+      width: double.infinity,
+      padding: const pw.EdgeInsets.all(12),
+      decoration: pw.BoxDecoration(
+        color: background,
+        borderRadius: pw.BorderRadius.circular(8),
+      ),
+      child: pw.Column(
+        crossAxisAlignment: pw.CrossAxisAlignment.start,
+        children: [
+          pw.Text(
+            title,
+            style: pw.TextStyle(
+              font: font,
+              fontSize: 12,
+              fontWeight: pw.FontWeight.bold,
+            ),
+          ),
+          pw.SizedBox(height: 4),
+          pw.Text(body, style: pw.TextStyle(font: font, fontSize: 10)),
+        ],
+      ),
     );
   }
 

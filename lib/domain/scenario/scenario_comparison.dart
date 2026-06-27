@@ -12,12 +12,7 @@ class EducationScenario {
   final EducationPolicy policy;
   final DiagnosisResult result;
 
-  String get label => switch (policy) {
-        EducationPolicy.publicAll => 'すべて公立',
-        EducationPolicy.privateAll => 'すべて私立',
-        EducationPolicy.publicToPrivate => '高校まで公立・大学私立',
-        EducationPolicy.custom => '個別設定',
-      };
+  String get label => educationPolicyLabel(policy);
 }
 
 class ScenarioComparisonService {

@@ -116,7 +116,13 @@ class ResultDashboardScreen extends ConsumerWidget {
               ),
             ),
           ),
-          const SizedBox(height: 24),
+          const SizedBox(height: 16),
+          OutlinedButton.icon(
+            onPressed: () => context.push('/result/$resultId/timeline'),
+            icon: const Icon(Icons.timeline),
+            label: const Text('保障額の推移を見る'),
+          ),
+          const SizedBox(height: 12),
           PrimaryButton(
             label: '再診断する',
             onPressed: () {

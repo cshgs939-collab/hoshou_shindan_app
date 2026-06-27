@@ -8,6 +8,7 @@ import 'package:hoshou_shindan_app/data/export/diagnosis_export.dart';
 import 'package:hoshou_shindan_app/data/export/diagnosis_pdf_exporter.dart';
 import 'package:hoshou_shindan_app/data/models/diagnosis_input.dart';
 import 'package:hoshou_shindan_app/domain/calculation/calculation_engine.dart';
+import 'package:hoshou_shindan_app/domain/calculation/coverage_timeline.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -54,5 +55,13 @@ void main() {
     final bytes = await exporter.buildPdf(input: input, result: result);
     expect(bytes, isNotEmpty);
     expect(bytes.take(4).toList(), [0x25, 0x50, 0x44, 0x46]); // %PDF
+  });
+
+  test('PDFに保障額推移データが含まれる', () async {
+    final exporter = DiagnosisPdfExporter();
+    final bytes = await exporter.buildPdf(input: input, result: result);
+    final points = calcCoverageTimeline(input);
+    expect(points, isNotEmpty);
+    expect(bytes.length, greaterThan(3000));
   });
 }

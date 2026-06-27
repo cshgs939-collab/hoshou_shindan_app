@@ -6,6 +6,7 @@ enum SchoolStage {
   juniorHigh,
   highSchool,
   university,
+  vocational,
 }
 
 class RemainingStage {
@@ -23,6 +24,7 @@ const Map<SchoolStage, Map<SchoolType, int>> educationCostPerYear = {
     SchoolType.national: 16,
     SchoolType.privateLib: 33,
     SchoolType.privateSci: 33,
+    SchoolType.vocational: 16,
   },
   SchoolStage.elementary: {
     SchoolType.public: 35,
@@ -30,6 +32,7 @@ const Map<SchoolStage, Map<SchoolType, int>> educationCostPerYear = {
     SchoolType.national: 35,
     SchoolType.privateLib: 167,
     SchoolType.privateSci: 167,
+    SchoolType.vocational: 35,
   },
   SchoolStage.juniorHigh: {
     SchoolType.public: 54,
@@ -37,6 +40,7 @@ const Map<SchoolStage, Map<SchoolType, int>> educationCostPerYear = {
     SchoolType.national: 54,
     SchoolType.privateLib: 144,
     SchoolType.privateSci: 144,
+    SchoolType.vocational: 54,
   },
   SchoolStage.highSchool: {
     SchoolType.public: 51,
@@ -44,6 +48,7 @@ const Map<SchoolStage, Map<SchoolType, int>> educationCostPerYear = {
     SchoolType.national: 51,
     SchoolType.privateLib: 105,
     SchoolType.privateSci: 105,
+    SchoolType.vocational: 51,
   },
   SchoolStage.university: {
     SchoolType.public: 64,
@@ -51,33 +56,34 @@ const Map<SchoolStage, Map<SchoolType, int>> educationCostPerYear = {
     SchoolType.national: 64,
     SchoolType.privateLib: 100,
     SchoolType.privateSci: 136,
+    SchoolType.vocational: 64,
+  },
+  SchoolStage.vocational: {
+    SchoolType.vocational: 80,
   },
 };
 
-SchoolType resolveSchoolType(EducationPolicy policy) {
-  switch (policy) {
-    case EducationPolicy.publicAll:
-      return SchoolType.public;
-    case EducationPolicy.privateAll:
-      return SchoolType.private;
-    case EducationPolicy.publicToPrivate:
-      return SchoolType.public;
-    case EducationPolicy.custom:
-      return SchoolType.public;
-  }
+bool _usesPublicK12(EducationPolicy policy) {
+  return switch (policy) {
+    EducationPolicy.privateAll => false,
+    _ => true,
+  };
 }
 
-SchoolType resolveUniversityType(EducationPolicy policy) {
-  switch (policy) {
-    case EducationPolicy.publicAll:
-      return SchoolType.national;
-    case EducationPolicy.privateAll:
-      return SchoolType.privateLib;
-    case EducationPolicy.publicToPrivate:
-      return SchoolType.privateLib;
-    case EducationPolicy.custom:
-      return SchoolType.national;
-  }
+SchoolType resolveSchoolType(EducationPolicy policy) {
+  return _usesPublicK12(policy) ? SchoolType.public : SchoolType.private;
+}
+
+SchoolType? resolveUniversityType(EducationPolicy policy) {
+  return switch (policy) {
+    EducationPolicy.publicAll || EducationPolicy.university4 => SchoolType.national,
+    EducationPolicy.privateAll || EducationPolicy.universityPrivate =>
+      SchoolType.privateLib,
+    EducationPolicy.publicToPrivate => SchoolType.privateLib,
+    EducationPolicy.universityScience => SchoolType.privateSci,
+    EducationPolicy.noHigherEd || EducationPolicy.vocational => null,
+    EducationPolicy.custom => SchoolType.national,
+  };
 }
 
 List<RemainingStage> getRemainingStages(int childAge, EducationPolicy policy) {
@@ -104,7 +110,17 @@ List<RemainingStage> getRemainingStages(int childAge, EducationPolicy policy) {
   addStage(SchoolStage.elementary, 6, 12, elementaryType);
   addStage(SchoolStage.juniorHigh, 12, 15, elementaryType);
   addStage(SchoolStage.highSchool, 15, 18, highSchoolType);
-  addStage(SchoolStage.university, 18, 22, universityType);
+
+  switch (policy) {
+    case EducationPolicy.vocational:
+      addStage(SchoolStage.vocational, 18, 20, SchoolType.vocational);
+    case EducationPolicy.noHigherEd:
+      break;
+    default:
+      if (universityType != null) {
+        addStage(SchoolStage.university, 18, 22, universityType);
+      }
+  }
 
   return stages;
 }
