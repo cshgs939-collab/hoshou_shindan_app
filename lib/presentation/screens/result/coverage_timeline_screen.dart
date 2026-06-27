@@ -31,12 +31,13 @@ class CoverageTimelineScreen extends ConsumerWidget {
       );
     }
 
+    final periodChart = calcCoveragePeriodChart(input);
     final points = calcCoverageTimeline(input);
     final gapAdvice = buildTimelineGapAdvice(points);
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('保障額の推移'),
+        title: const Text('保障の年齢区間'),
         actions: [
           IconButton(
             icon: const Icon(Icons.share_outlined),
@@ -55,12 +56,12 @@ class CoverageTimelineScreen extends ConsumerWidget {
           ),
           const SizedBox(height: 16),
           Text(
-            '現在（${input.age}歳）〜 65歳まで',
+            'あなた${input.age}歳 → 65歳',
             style: Theme.of(context).textTheme.titleMedium,
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 4),
           Text(
-            '万円',
+            '各バーに「金額」と「何歳から何歳まで」を表示します',
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
                   color: AppColors.outline,
                 ),
@@ -69,25 +70,10 @@ class CoverageTimelineScreen extends ConsumerWidget {
           Card(
             child: Padding(
               padding: const EdgeInsets.all(16),
-              child: Column(
-                children: [
-                  CoverageTimelineChart(points: points),
-                  const SizedBox(height: 12),
-                  CoverageGapLineChart(points: points),
-                ],
-              ),
+              child: CoveragePeriodTimelineChart(data: periodChart),
             ),
           ),
           const SizedBox(height: 12),
-          Wrap(
-            spacing: 16,
-            runSpacing: 8,
-            children: const [
-              _LegendItem(color: AppColors.primary, label: '必要保障額'),
-              _LegendItem(color: AppColors.secondary, label: '既存保障（生保＋定期）'),
-              _LegendItem(color: AppColors.error, label: '不足額ライン'),
-            ],
-          ),
           if (gapAdvice != null) ...[
             const SizedBox(height: 16),
             Card(
@@ -163,31 +149,5 @@ class CoverageTimelineScreen extends ConsumerWidget {
         SnackBar(content: Text('PDFの作成に失敗しました: $error')),
       );
     }
-  }
-}
-
-class _LegendItem extends StatelessWidget {
-  const _LegendItem({required this.color, required this.label});
-
-  final Color color;
-  final String label;
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Container(
-          width: 12,
-          height: 12,
-          decoration: BoxDecoration(
-            color: color,
-            borderRadius: BorderRadius.circular(2),
-          ),
-        ),
-        const SizedBox(width: 6),
-        Text(label, style: Theme.of(context).textTheme.bodySmall),
-      ],
-    );
   }
 }

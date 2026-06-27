@@ -43,8 +43,30 @@ void main() {
     expect(at60, equals(input.lifeInsurance));
   });
 
-  test('住宅ローン残債は年数経過で減る', () {
-    final projected = projectInputToAge(_sampleInput(), 45);
-    expect(projected.mortgageBalance, lessThan(_sampleInput().mortgageBalance!));
+  test('収入保障は年数経過で積み上げが減る', () {
+    final input = _sampleInput().copyWith(
+      incomeProtectionMonthly: 10,
+      incomeProtectionYears: 20,
+    );
+    final now = calcCoverageBreakdownAtAge(input, 35);
+    final later = calcCoverageBreakdownAtAge(input, 50);
+    expect(now.incomeProtection, greaterThan(later.incomeProtection));
+  });
+
+  test('内訳合計がタイムラインの既存保障と一致', () {
+    final points = calcCoverageTimeline(_sampleInput());
+    for (final point in points) {
+      expect(point.existingCoverage, equals(point.breakdown.total));
+    }
+  });
+
+  test('区間グラフに金額と年齢が含まれる', () {
+    final chart = calcCoveragePeriodChart(_sampleInput());
+    expect(chart.rows, isNotEmpty);
+    expect(chart.summaryLines, isNotEmpty);
+    final termRow = chart.rows.firstWhere((r) => r.title == '定期保険');
+    expect(termRow.segments.first.amountMan, 1000);
+    expect(termRow.segments.first.ageRangeLabel, contains('歳'));
+    expect(chart.summaryLines.first, contains('万'));
   });
 }

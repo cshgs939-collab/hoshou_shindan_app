@@ -10,12 +10,14 @@ import '../../../data/models/diagnosis_input.dart';
 import '../../../data/models/diagnosis_result.dart';
 import '../../../data/repositories/hive_repository.dart';
 import '../../../domain/calculation/calculation_engine.dart';
+import '../../../domain/calculation/coverage_timeline.dart';
 import '../../providers/diagnosis_input_provider.dart';
 import '../../providers/export_provider.dart';
 import '../../providers/history_provider.dart';
 import '../../widgets/primary_button.dart';
 import '../../widgets/calculation_explanation_panel.dart';
 import '../../widgets/insurance_period_panel.dart';
+import 'widgets/coverage_timeline_chart.dart';
 import 'widgets/result_widgets.dart';
 
 class ResultDashboardScreen extends ConsumerWidget {
@@ -79,13 +81,54 @@ class ResultDashboardScreen extends ConsumerWidget {
             ],
           ),
           const SizedBox(height: 16),
+          if (input != null) ...[
+            Card(
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      '保障の年齢区間',
+                      style: Theme.of(context).textTheme.titleMedium,
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      '例：1,000万円（35歳〜60歳）のように表示',
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                            color: AppColors.outline,
+                          ),
+                    ),
+                    const SizedBox(height: 12),
+                    CoveragePeriodTimelineChart(
+                      data: calcCoveragePeriodChart(input),
+                      compact: true,
+                    ),
+                    const SizedBox(height: 10),
+                    const CoverageStackedLegend(compact: true),
+                    const SizedBox(height: 8),
+                    Align(
+                      alignment: Alignment.centerRight,
+                      child: TextButton.icon(
+                        onPressed: () =>
+                            context.push('/result/$resultId/timeline'),
+                        icon: const Icon(Icons.open_in_full, size: 18),
+                        label: const Text('大きく見る'),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(height: 16),
+          ],
           Card(
             child: Padding(
               padding: const EdgeInsets.all(16),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('必要 vs 既存',
+                  Text('必要 vs 既存（費目別）',
                       style: Theme.of(context).textTheme.titleMedium),
                   const SizedBox(height: 12),
                   CoverageBarChart(result: result),
@@ -127,8 +170,8 @@ class ResultDashboardScreen extends ConsumerWidget {
           if (input != null) const SizedBox(height: 12),
           OutlinedButton.icon(
             onPressed: () => context.push('/result/$resultId/timeline'),
-            icon: const Icon(Icons.timeline),
-            label: const Text('保障額の推移を見る'),
+            icon: const Icon(Icons.stacked_bar_chart),
+            label: const Text('保障の年齢区間（詳細）'),
           ),
           const SizedBox(height: 12),
           PrimaryButton(

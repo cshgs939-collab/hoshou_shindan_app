@@ -14,4 +14,10 @@ abstract final class AppColors {
   static const housing = Color(0xFFEF6C00);
   static const funeral = Color(0xFF546E7A);
   static const surplus = Color(0xFF43A047);
+
+  /// 積み上げグラフ：保険・資産の内訳
+  static const insuranceLife = Color(0xFF43A047);
+  static const insuranceTerm = Color(0xFF00897B);
+  static const insuranceIncome = Color(0xFF7B1FA2);
+  static const insuranceSavings = Color(0xFF78909C);
 }
