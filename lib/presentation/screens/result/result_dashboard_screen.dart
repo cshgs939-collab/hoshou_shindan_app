@@ -117,6 +117,14 @@ class ResultDashboardScreen extends ConsumerWidget {
             ),
           ),
           const SizedBox(height: 16),
+          if (input != null)
+            OutlinedButton.icon(
+              onPressed: () =>
+                  context.push('/result/$resultId/family-timeline'),
+              icon: const Icon(Icons.view_timeline_outlined),
+              label: const Text('保障期間と進路グラフ'),
+            ),
+          if (input != null) const SizedBox(height: 12),
           OutlinedButton.icon(
             onPressed: () => context.push('/result/$resultId/timeline'),
             icon: const Icon(Icons.timeline),

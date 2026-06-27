@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../core/constants/app_colors.dart';
+import '../../core/constants/app_explanations.dart';
 import '../../core/constants/pension_constants.dart';
 import '../../data/models/diagnosis_input.dart';
 import '../../domain/calculation/insurance_period.dart';
@@ -31,18 +32,25 @@ class InsurancePeriodPanel extends StatelessWidget {
             ),
             const SizedBox(height: 4),
             Text(
-              'あなた ${input.age}歳'
-              '${input.hasSpouse && input.spouseAge != null ? ' / 配偶者 ${input.spouseAge}歳' : ''}'
-              '${input.childrenAges.isNotEmpty ? ' / お子さん ${input.youngestChildAge}歳' : ''}',
+              _headerLine(input),
               style: theme.textTheme.bodySmall,
             ),
             const SizedBox(height: 10),
             if (summary.yearsUntilChild18 > 0)
               _line('お子さんが18歳になるまで', summary.yearsUntilChild18),
             if (summary.yearsUntilChildIndependent > 0)
-              _line('お子さんが22歳（自立）まで', summary.yearsUntilChildIndependent),
+              _line('末子が進路の卒業年齢まで', summary.yearsUntilChildIndependent),
             if (summary.yearsUntilSpouse65 > 0)
               _line('配偶者が${retirementStartAge}歳になるまで', summary.yearsUntilSpouse65),
+            if (!input.hasSpouse && input.childrenAges.isNotEmpty) ...[
+              const SizedBox(height: 6),
+              Text(
+                AppExplanations.familyTimelineLead(input),
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: AppColors.outline,
+                ),
+              ),
+            ],
             const Divider(height: 16),
             Text(
               '定期保険の目安：約 ${summary.recommendedYears} 年以上',
@@ -85,5 +93,18 @@ class InsurancePeriodPanel extends StatelessWidget {
       padding: const EdgeInsets.only(bottom: 4),
       child: Text('・$label：約${years}年', style: const TextStyle(fontSize: 13)),
     );
+  }
+
+  String _headerLine(DiagnosisInput input) {
+    final parts = <String>['あなた ${input.age}歳'];
+    if (input.hasSpouse && input.spouseAge != null) {
+      parts.add('配偶者 ${input.spouseAge}歳');
+    } else if (!input.hasSpouse && input.childrenAges.isNotEmpty) {
+      parts.add('ひとり親世帯');
+    }
+    if (input.childrenAges.isNotEmpty) {
+      parts.add('お子さん ${input.childrenAges.length}人');
+    }
+    return parts.join(' / ');
   }
 }

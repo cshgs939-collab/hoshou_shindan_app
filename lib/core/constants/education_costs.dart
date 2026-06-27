@@ -133,3 +133,28 @@ int calcEducationFee(int childAge, EducationPolicy policy) {
   }
   return totalFee;
 }
+
+/// 進路ごとの「卒業・自立」年齢
+int graduationAgeForPolicy(EducationPolicy policy) {
+  return switch (policy) {
+    EducationPolicy.noHigherEd => 18,
+    EducationPolicy.vocational => 20,
+    _ => 22,
+  };
+}
+
+String graduationMilestoneLabel(EducationPolicy policy) {
+  final age = graduationAgeForPolicy(policy);
+  final path = switch (policy) {
+    EducationPolicy.noHigherEd => '高卒就職',
+    EducationPolicy.vocational => '専門学校卒',
+    EducationPolicy.university4 => '国公立大卒',
+    EducationPolicy.universityPrivate => '私立大（文系）卒',
+    EducationPolicy.universityScience => '私立大（理系）卒',
+    EducationPolicy.publicAll => '公立コース大卒',
+    EducationPolicy.privateAll => '私立コース大卒',
+    EducationPolicy.publicToPrivate => '大学私立卒',
+    EducationPolicy.custom => '進学卒',
+  };
+  return '$path（${age}歳）';
+}

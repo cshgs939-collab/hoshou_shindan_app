@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../core/constants/app_explanations.dart';
 import '../../../core/constants/pension_constants.dart';
 import '../../../core/utils/employment_advice.dart';
 import '../../../core/utils/employment_labels.dart';
@@ -15,6 +16,7 @@ import '../../widgets/primary_button.dart';
 import '../../widgets/employment_advice_panel.dart';
 import '../../widgets/existing_insurance_guide.dart';
 import '../../widgets/insurance_period_panel.dart';
+import '../../widgets/old_age_pension_panel.dart';
 import '../../widgets/step_progress_bar.dart';
 import '../guide/sample_guide_screen.dart';
 
@@ -258,6 +260,8 @@ class Step2Screen extends ConsumerWidget {
               showIncomeBreakdown: true,
             ),
           ],
+          const SizedBox(height: 12),
+          OldAgePensionPanel(input: input),
           const SizedBox(height: 20),
           if (input.hasSpouse)
             NumberInputField(
@@ -321,9 +325,7 @@ class Step2Screen extends ConsumerWidget {
             suffix: '万円/月',
             onChanged: (v) =>
                 notifier.updateRetirementMonthlyExpense(v ?? 20),
-            helper:
-                '配偶者が${retirementStartAge}歳以降の月額生活費。'
-                '老齢基礎年金・遺族/老齢厚生を差し引きます（就労は見込みません）。',
+            helper: AppExplanations.retirementExpenseFieldHelper(input),
           ),
           const SizedBox(height: 16),
           Card(
@@ -342,21 +344,14 @@ class Step2Screen extends ConsumerWidget {
                         ),
                   ),
                   const SizedBox(height: 8),
-                  const Text(
-                    '・65歳前：遺族年金＋配偶者就労を差し引き',
-                    style: TextStyle(fontSize: 13),
-                  ),
-                  const Text(
-                    '・65歳以降：公的年金のみ差し引き（就労は見込まない）',
-                    style: TextStyle(fontSize: 13),
-                  ),
-                  const Text(
-                    '・教育費・家賃・葬儀費は別枠で加算',
-                    style: TextStyle(fontSize: 13),
-                  ),
-                  const Text(
-                    '・結果画面「計算の考え方」で詳細を確認できます',
-                    style: TextStyle(fontSize: 13),
+                  ...AppExplanations.step2PremiseBullets(input).map(
+                    (line) => Padding(
+                      padding: const EdgeInsets.only(bottom: 4),
+                      child: Text(
+                        '・$line',
+                        style: const TextStyle(fontSize: 13),
+                      ),
+                    ),
                   ),
                 ],
               ),

@@ -1,13 +1,16 @@
 import 'package:flutter/material.dart';
 
 import '../../core/constants/app_colors.dart';
+import '../../core/constants/app_explanations.dart';
 import '../../core/constants/pension_constants.dart';
 import '../../core/utils/formatter.dart';
 import '../../data/models/diagnosis_input.dart';
 import '../../data/models/diagnosis_result.dart';
 import '../../domain/calculation/calculation_engine.dart';
+import '../../domain/calculation/old_age_pension_calculator.dart';
 import '../../domain/calculation/retirement_guarantee_summary.dart';
 import '../../domain/calculation/survivor_pension_calculator.dart';
+import 'old_age_pension_panel.dart';
 
 /// 診断結果の計算根拠をユーザー向けに説明するパネル
 class CalculationExplanationPanel extends StatelessWidget {
@@ -43,15 +46,43 @@ class CalculationExplanationPanel extends StatelessWidget {
             ),
             const SizedBox(height: 8),
             Text(
-              '65歳前は「必要額 − 遺族年金 − 配偶者就労」、'
-              '65歳以降は「必要額 − 公的年金のみ」（就労は見込まない）で'
-              '不足分を算出します。教育費・住居費・葬儀費は別枠です。',
+              AppExplanations.survivorDiagnosisLead(input),
               style: theme.textTheme.bodyMedium,
+            ),
+            const SizedBox(height: 10),
+            ...AppExplanations.survivorDiagnosisBullets(input).map(
+              (line) => Padding(
+                padding: const EdgeInsets.only(bottom: 4),
+                child: Text(
+                  '・$line',
+                  style: theme.textTheme.bodySmall,
+                ),
+              ),
+            ),
+            const SizedBox(height: 12),
+            Text(
+              '進路別の卒業・自立年齢',
+              style: theme.textTheme.titleSmall?.copyWith(
+                fontWeight: FontWeight.w600,
+                color: AppColors.primary,
+              ),
+            ),
+            const SizedBox(height: 6),
+            ...AppExplanations.educationGraduationBullets().map(
+              (line) => Padding(
+                padding: const EdgeInsets.only(bottom: 4),
+                child: Text(
+                  '・$line',
+                  style: theme.textTheme.bodySmall,
+                ),
+              ),
             ),
             if (guarantee != null) ...[
               const SizedBox(height: 16),
               _GuaranteeHighlight(summary: guarantee),
             ],
+            const SizedBox(height: 16),
+            OldAgePensionPanel(input: input, compact: true),
             const SizedBox(height: 16),
             _Section(
               title: '生活費不足分',

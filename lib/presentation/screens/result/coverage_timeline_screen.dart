@@ -3,11 +3,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/constants/app_colors.dart';
+import '../../../core/constants/app_explanations.dart';
 import '../../../data/models/diagnosis_input.dart';
 import '../../../data/models/diagnosis_result.dart';
 import '../../../data/repositories/hive_repository.dart';
 import '../../../domain/calculation/coverage_timeline.dart';
 import '../../providers/export_provider.dart';
+import '../../widgets/app_explanation_card.dart';
 import '../../widgets/primary_button.dart';
 import 'widgets/coverage_timeline_chart.dart';
 
@@ -46,6 +48,12 @@ class CoverageTimelineScreen extends ConsumerWidget {
       body: ListView(
         padding: const EdgeInsets.all(20),
         children: [
+          AppExplanationCard(
+            title: 'このグラフについて',
+            lead: AppExplanations.coverageTimelineLead(input.age),
+            bullets: AppExplanations.coverageTimelineBullets(),
+          ),
+          const SizedBox(height: 16),
           Text(
             '現在（${input.age}歳）〜 65歳まで',
             style: Theme.of(context).textTheme.titleMedium,

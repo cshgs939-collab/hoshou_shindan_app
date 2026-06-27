@@ -3,10 +3,13 @@ import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
 
+import '../../core/constants/app_explanations.dart';
+import '../../core/constants/pension_constants.dart';
 import '../../core/enums/housing_type.dart';
 import '../../core/utils/formatter.dart';
 import '../../domain/calculation/calculation_engine.dart';
 import '../../domain/calculation/coverage_timeline.dart';
+import '../../domain/calculation/old_age_pension_calculator.dart';
 import '../models/diagnosis_input.dart';
 import '../models/diagnosis_result.dart';
 
@@ -87,6 +90,8 @@ class DiagnosisPdfExporter {
                 pw.SizedBox(height: 8),
                 _breakdownTable(font, result),
                 pw.SizedBox(height: 16),
+                _oldAgePensionSection(font, input),
+                pw.SizedBox(height: 16),
                 pw.Text(
                   '入力サマリー',
                   style: pw.TextStyle(
@@ -97,6 +102,8 @@ class DiagnosisPdfExporter {
                 ),
                 pw.SizedBox(height: 8),
                 _inputSummary(font, input),
+                pw.SizedBox(height: 16),
+                _guideSection(font, input),
                 pw.Spacer(),
                 pw.Text(
                   'アドバイス',
@@ -139,6 +146,25 @@ class DiagnosisPdfExporter {
                 ),
                 pw.SizedBox(height: 4),
                 pw.Text('現在（${input.age}歳）〜 65歳まで'),
+                pw.SizedBox(height: 4),
+                pw.Text(
+                  AppExplanations.coverageTimelineLead(input.age),
+                  style: pw.TextStyle(font: font, fontSize: 9),
+                ),
+                pw.SizedBox(height: 4),
+                ...AppExplanations.coverageTimelineBullets().map(
+                  (line) => pw.Padding(
+                    padding: const pw.EdgeInsets.only(bottom: 2),
+                    child: pw.Text(
+                      '・$line',
+                      style: pw.TextStyle(
+                        font: font,
+                        fontSize: 8,
+                        color: PdfColors.grey700,
+                      ),
+                    ),
+                  ),
+                ),
                 pw.SizedBox(height: 4),
                 pw.Text(
                   '単位: 万円　※ 既存保障は生保＋定期保険の合計',
@@ -394,6 +420,74 @@ class DiagnosisPdfExporter {
           pw.Text(body, style: pw.TextStyle(font: font, fontSize: 10)),
         ],
       ),
+    );
+  }
+
+  pw.Widget _guideSection(pw.Font font, DiagnosisInput input) {
+    final lines = AppExplanations.pdfGuideLines(input);
+    return pw.Column(
+      crossAxisAlignment: pw.CrossAxisAlignment.start,
+      children: [
+        pw.Text(
+          '試算の考え方',
+          style: pw.TextStyle(
+            font: font,
+            fontSize: 14,
+            fontWeight: pw.FontWeight.bold,
+          ),
+        ),
+        pw.SizedBox(height: 6),
+        ...lines.map(
+          (line) => pw.Padding(
+            padding: const pw.EdgeInsets.only(bottom: 3),
+            child: pw.Text(
+              line,
+              style: pw.TextStyle(font: font, fontSize: 9),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  pw.Widget _oldAgePensionSection(pw.Font font, DiagnosisInput input) {
+    final insured = estimateInsuredOldAgePension(input);
+    final spouse = estimateSpouseOldAgePension(input);
+    final gap = calcRetirementPensionGap(input);
+    final lines = <String>[
+      formatOldAgePensionSummary(insured),
+      if (spouse != null) formatOldAgePensionSummary(spouse),
+      AppExplanations.retirementGapExplanation(gap),
+    ];
+
+    return pw.Column(
+      crossAxisAlignment: pw.CrossAxisAlignment.start,
+      children: [
+        pw.Text(
+          '${retirementStartAge}歳からの公的年金（概算・健在前提）',
+          style: pw.TextStyle(
+            font: font,
+            fontSize: 14,
+            fontWeight: pw.FontWeight.bold,
+          ),
+        ),
+        pw.SizedBox(height: 4),
+        pw.Text(
+          AppExplanations.oldAgePensionLead(input),
+          style: pw.TextStyle(font: font, fontSize: 9),
+        ),
+        pw.SizedBox(height: 6),
+        ...lines.map(
+          (line) => pw.Padding(
+            padding: const pw.EdgeInsets.only(bottom: 4),
+            child: pw.Text('• $line', style: pw.TextStyle(font: font, fontSize: 10)),
+          ),
+        ),
+        pw.Text(
+          '※ 万一の保障試算とは別の老後収入目安です。',
+          style: pw.TextStyle(font: font, fontSize: 8, color: PdfColors.grey700),
+        ),
+      ],
     );
   }
 

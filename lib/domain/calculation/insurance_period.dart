@@ -1,8 +1,18 @@
 import 'dart:math';
 
+import '../../core/constants/education_costs.dart';
 import '../../data/models/diagnosis_input.dart';
-import 'calculation_engine.dart';
 import 'survivor_pension_calculator.dart';
+
+int calcYearsUntilYoungestGraduation(DiagnosisInput input) {
+  if (input.childrenAges.isEmpty) return 0;
+  var maxYears = 0;
+  for (var i = 0; i < input.childrenAges.length; i++) {
+    final gradAge = graduationAgeForPolicy(input.educationPolicyForChild(i));
+    maxYears = max(maxYears, max(0, gradAge - input.childrenAges[i]));
+  }
+  return maxYears;
+}
 
 /// 保障が必要な期間と定期保険の残り期間
 class InsurancePeriodSummary {
@@ -17,7 +27,7 @@ class InsurancePeriodSummary {
 
   factory InsurancePeriodSummary.from(DiagnosisInput input) {
     final yearsUntilChild18 = calcYearsUntilChild18End(input);
-    final yearsUntilChildIndependent = calcYearsUntilYoungestIndependent(input);
+    final yearsUntilChildIndependent = calcYearsUntilYoungestGraduation(input);
     final yearsUntilSpouse65 = calcSurvivorWorkYears(input);
     final recommendedYears = calcRecommendedInsuranceYears(input);
     final termEndAge = input.termInsuranceEndAge;
@@ -55,9 +65,9 @@ class InsurancePeriodSummary {
 /// 定期保険の保障期間の目安（最も長い必要期間）
 int calcRecommendedInsuranceYears(DiagnosisInput input) {
   final child18 = calcYearsUntilChild18End(input);
-  final childIndep = calcYearsUntilYoungestIndependent(input);
+  final childGrad = calcYearsUntilYoungestGraduation(input);
   final spouse65 = calcSurvivorWorkYears(input);
-  return max(max(child18, childIndep), spouse65);
+  return max(max(child18, childGrad), spouse65);
 }
 
 /// 定期保険の残り保障年数（終了年齢 − 現在年齢）

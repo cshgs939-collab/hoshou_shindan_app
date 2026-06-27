@@ -12,6 +12,7 @@ import 'presentation/screens/guide/sample_guide_screen.dart';
 import 'presentation/screens/history/compare_screen.dart';
 import 'presentation/screens/home/home_screen.dart';
 import 'presentation/screens/onboarding/onboarding_screen.dart';
+import 'presentation/screens/result/family_protection_timeline_screen.dart';
 import 'presentation/screens/result/coverage_timeline_screen.dart';
 import 'presentation/screens/result/result_dashboard_screen.dart';
 import 'presentation/screens/scenario/scenario_screen.dart';
@@ -126,6 +127,12 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/result/:id',
         builder: (context, state) => ResultDashboardScreen(
+          resultId: state.pathParameters['id']!,
+        ),
+      ),
+      GoRoute(
+        path: '/result/:id/family-timeline',
+        builder: (context, state) => FamilyProtectionTimelineScreen(
           resultId: state.pathParameters['id']!,
         ),
       ),
